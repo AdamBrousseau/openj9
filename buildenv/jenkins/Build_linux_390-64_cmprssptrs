@@ -20,44 +20,39 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
 
-pipeline {
-    agent {label '390'}
+def build = load "buildenv/jenkins/build"
 
+node ("390") {
+
+/*
     environment {
         OPENJDK_REPO   = "https://github.com/ibmruntimes/openj9-openjdk-jdk9.git"
         OPENJDK_BRANCH = "openj9"
         BOOT_JDK       = "$HOME/openj9/ibm-java-s390x-80"
         FREEMARKER     = "$HOME/openj9/freemarker.jar"
+        RELEASE        = "linux-s390x-normal-server-release"
+        ENABLE_CUDA    = ""
+        //ENABLE_CUDA    = "--enable-cuda"
     }
-    stages {
-        stage('Get Source') {
-            steps {
-                timestamps {
-                    script {
-                        if (fileExists('.git')) {
-                            sh "git clean -ffxd"
-                        }
-                    }
-                    git branch: "$OPENJDK_BRANCH", url: "$OPENJDK_REPO"
-                    sh "bash ./get_source.sh"
-                }
-            }
-        }
-               
-        stage('Compile') {
-            steps {
-                timestamps {
-                    sh "bash ./configure --with-freemarker-jar=$FREEMARKER --with-boot-jdk=$BOOT_JDK"
-                    sh "make all"
-                }
-            }
-        }
-        stage('Java Version') {
-            steps {
-                timestamps {
-                    sh "build/linux-s390x-normal-server-release/images/jdk/bin/java -version"
-                }
-            }
-        }
-    }
+*/
+
+    //echo "$GIT_BRANCH $GIT_URL"
+    echo env.GIT_BRANCH
+    echo env.GIT_URL
+    sh 'env'
+    sh 'export'
+    //git branch: "$GIT_BRANCH", url: "$GIT_URL"
+    //build = load "buildenv/jenkins/build"
+
+    def OPENJDK_REPO   = "https://github.com/ibmruntimes/openj9-openjdk-jdk9.git"
+    def OPENJDK_BRANCH = "openj9"
+    def BOOT_JDK       = "$HOME/openj9/ibm-java-s390x-80"
+    def FREEMARKER     = "$HOME/openj9/freemarker.jar"
+    def RELEASE        = "linux-s390x-normal-server-release"
+    def ENABLE_CUDA    = ""
+    //def ENABLE_CUDA    = "--enable-cuda"
+
+    build.get_source( OPENJDK_REPO, OPENJDK_BRANCH )
+    //build.compile( FREEMARKER, BOOT_JDK )
+    //build.java_version( RELEASE )
 }
