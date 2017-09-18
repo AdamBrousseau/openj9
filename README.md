@@ -20,7 +20,7 @@ OpenJDK Assembly Exception [2].
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
 -->
 
-
+DUMMY CHANGE
 Welcome to the Eclipse OpenJ9 repository
 ========================================
 
