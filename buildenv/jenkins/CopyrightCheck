@@ -29,6 +29,10 @@
                 timestamps {
                     echo "HelloWorld!"
                     sh 'ls -al'
+                    git branch: 'master', url 'https://github.com/AdamBrousseau/openj9.git'
+                    sh 'git fetch --tags --progress origin +refs/pull/*:refs/remotes/origin/pr/*'
+                    sh "git checkout $sha1"
+                    sh "git log --oneline -1"
                 }
             }
         }
