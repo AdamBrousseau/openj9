@@ -87,8 +87,8 @@ script:
   # Test
   - cd openj9/test/TestConfig
   - export SPEC=linux_x86-64_cmprssptrs
-  - export JAVA_BIN=$TRAVIS_BUILD_DIR/build/linux-x86_64-normal-server-release/images/jdk/bin
-  - export EXCLUDE_FILE=$TRAVIS_BUILD_DIR/openj9/test/TestConfig/resources/excludes/openj9_exclude.txt
+  - export JAVA_BIN=$TRAVIS_BUILD_DIR/../openj9-openjdk-jdk9/build/linux-x86_64-normal-server-release/images/jdk/bin
+  - export EXCLUDE_FILE=$TRAVIS_BUILD_DIR/../openj9-openjdk-jdk9/openj9/test/TestConfig/resources/excludes/openj9_exclude.txt
   - make -f run_configure.mk
   - make getdependency
   - make compile
