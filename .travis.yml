@@ -28,6 +28,8 @@ dist: trusty
 addons:
   apt:
     packages:
+      - ant
+      - ant-contrib
       - autoconf 
       - ca-certificates 
       - ccache 
