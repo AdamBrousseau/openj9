@@ -77,8 +77,18 @@ script:
   # Limit number of jobs to work around g++ internal compiler error
   - export UMA_WINDOWS_PARRALLEL_HACK="-j4"
   - bash ./configure --with-freemarker-jar=$TRAVIS_BUILD_DIR/freemarker.jar --with-jobs=4 --with-num-cores=4
-  - make images
+  - make all
   # Minimal sniff test - ensure java -version works
   - ./build/linux-x86_64-normal-server-release/images/jdk/bin/java -version
+
+  # Test
+  - cd openj9/test/TestConfig
+  - export SPEC=linux_x86-64_cmprssptrs
+  - export JAVA_BIN=$TRAVIS_BUILD_DIR/build/linux-x86_64-normal-server-release/images/jdk/bin
+  - export EXCLUDE_FILE =$TRAVIS_BUILD_DIR/openj9/test/TestConfig/resources/excludes/openj9_exclude.txt
+  - make -f run_configure.mk
+  - make getdependency
+  - make compile
+  - make sanity
 after_script:
         #- ccache -s
