@@ -16,3 +16,4 @@
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="jcl"/>
 <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dmoo.ddr.force.binary.address.resolver=false&#13;&#10;-Dmoo.ddr.allow.three.tier.address.resolver=false&#13;&#10;-Xmx512m"/>
 </launchConfiguration>
+<!-- add comment -->
