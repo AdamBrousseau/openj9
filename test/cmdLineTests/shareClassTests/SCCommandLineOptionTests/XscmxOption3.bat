@@ -51,6 +51,7 @@ if exist %TESTSCRIPT%.out (
     rem echo TEST PASSED
 ) else (
     echo %TESTSCRIPT%: TEST FAILED: No file created
+    new line
 )
 
 endlocal
