@@ -60,25 +60,32 @@ before_install:
 env:
   global:
 before_script:
+  - set -e
+  - pwd
+  - git log -1
         #  - ccache -s -z
   - wget https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download -O freemarker.tgz
   - tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip=2
   - cd ..
   # Shallow clone of the openj9-openjdk-jdk9 repo to speed up clone / reduce server load
+  - pwd
+  - ls -al
   - git clone --depth 1 https://github.com/ibmruntimes/openj9-openjdk-jdk9.git
 script:
   # Clear this option so it doesn't interfere with configure detecting the bootjdk
   - unset _JAVA_OPTIONS
   # Point the get_sources script at the OpenJ9 repo that's already been cloned to disk.  
   # Results in a copy of the source (disk space =( ) but no new network activity so overall a win. 
-  - cd openj9-openjdk-jdk9 && bash ./get_source.sh -openj9-repo=$TRAVIS_BUILD_DIR -openj9-branch=$TRAVIS_BRANCH -openj9-sha=$TRAVIS_COMMIT
+  - cd openj9-openjdk-jdk9 && bash ./get_source.sh -openj9-repo=$TRAVIS_BUILD_DIR -openj9-sha=$TRAVIS_COMMIT
+  - git -C openj9 log -1
   # Based on https://blog.travis-ci.com/2014-12-17-faster-builds-with-container-based-infrastructure/ travis container builds
   # have 2 cores and 4 gigs of memory.  Attempt to double provision the number of cores for the make...
   # Limit number of jobs to work around g++ internal compiler error
-  - export UMA_WINDOWS_PARRALLEL_HACK="-j4"
-  - bash ./configure --with-freemarker-jar=$TRAVIS_BUILD_DIR/freemarker.jar --with-jobs=4 --with-num-cores=4
-  - make images
+  #- export UMA_WINDOWS_PARRALLEL_HACK="-j4"
+  #- bash ./configure --with-freemarker-jar=$TRAVIS_BUILD_DIR/freemarker.jar --with-jobs=4 --with-num-cores=4
+  #- make images
   # Minimal sniff test - ensure java -version works
-  - ./build/linux-x86_64-normal-server-release/images/jdk/bin/java -version
+  #- ./build/linux-x86_64-normal-server-release/images/jdk/bin/java -version
+  - set +e
 after_script:
         #- ccache -s
