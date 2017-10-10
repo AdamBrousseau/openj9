@@ -80,7 +80,7 @@ script:
   # Limit number of jobs to work around g++ internal compiler error
   - export UMA_WINDOWS_PARRALLEL_HACK="-j4"
   - bash ./configure --with-freemarker-jar=$TRAVIS_BUILD_DIR/freemarker.jar --with-jobs=4 --with-num-cores=4
-  - make all
+  - travis_wait 60 make all
   # Minimal sniff test - ensure java -version works
   - ./build/linux-x86_64-normal-server-release/images/jdk/bin/java -version
 
