@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2013, 2016 IBM Corp. and others
+ * Copyright (c) 2013, 2017 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -392,8 +392,8 @@ final class SortNetwork {
 		try {
 			int capability = device.getAttribute(CudaDevice.ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR);
 
-			if (capability < 2) {
-				throw new GPUConfigurationException("Compute capability 2.0 or better required"); //$NON-NLS-1$
+			if (capability < 3) {
+				throw new GPUConfigurationException("Compute capability 3.0 or better required"); //$NON-NLS-1$
 			}
 
 			this.maxGridDimX = device.getAttribute(CudaDevice.ATTRIBUTE_MAX_GRID_DIM_X);

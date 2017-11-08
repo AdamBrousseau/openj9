@@ -150,8 +150,7 @@ define compile_cuda
 	$(JAVAC) -verbose -sourcepath "$(WORKSPACE)/sourcetools/JCL_Ant_Build/tools/" -cp "$(GPU_TMP_DIR)/" -source $(SPEC_VERSION) -target $(SPEC_VERSION) -verbose -d $(GPU_TMP_DIR)/ "$(files)"
 	$(JAVA) -cp $(GPU_TMP_DIR)/ KernelGenerator > $(GPU_TMP_DIR)/SortKernels.cu
 	$(NVCC) \
-		--generate-code arch=compute_20,code=compute_20 \
-		--generate-code arch=compute_20,code=sm_20 \
+		--generate-code arch=compute_30,code=compute_30 \
 		--generate-code arch=compute_30,code=sm_30 \
 		--generate-code arch=compute_35,code=sm_35 \
 		-fatbin --machine 64 --ptxas-options -O4 \
