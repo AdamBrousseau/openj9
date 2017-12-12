@@ -70,17 +70,6 @@
 			<class name="j9vm.test.softmx.SoftmxLocalTest" />
 		</classes>
 	</test>
-	<test name="testSoftMxRemote">
-		<classes>
-			<class name="j9vm.test.softmx.SoftmxRemoteTest" />
-		</classes>
-	</test>
-	<test name="testSoftMxDisclaimMemory">
-		<parameter name="SoftmxAdvanceTest_iteration" value="5" />
-		<classes>
-			<class name="j9vm.test.softmx.SoftmxAdvanceTest" />
-		</classes>
-	</test>
 	<test name="testSoftMxDisclaimMemory_GC">
 		<classes>
 			<class name="j9vm.test.softmx.SoftmxAdvanceTest_GC_Only" />
