@@ -24,23 +24,22 @@
     def SHAS = [:]
     stage ('Sniff Repos') {
         dir('openjdk') {
-            git branch: OPENJDK_BRANCH, url: OPENJDK_REPO, poll: true, changelog: true
+            echo OPENJDK_REPO
+            echo "${OPENJDK_REPO}"
             SHAS['OPENJDK'] = sh (
-                        script: 'git rev-parse --short HEAD',
+                        script: "git ls-remote $OPENJDK_REPO | grep refs/heads/$OPENJDK_BRANCH | awk \'{ print \$1}\' | sed -r 's/(^.{7}).*/\1/'",
                         returnStdout: true
                     ).trim()
         }
         dir('openj9') {
-            git branch: OPENJ9_BRANCH, url: OPENJ9_REPO, poll: true, changelog: true
             SHAS['OPENJ9'] = sh (
-                        script: 'git rev-parse --short HEAD',
+                        script: "git ls-remote $OPENJ9_REPO | grep refs/heads/$OPENJ9_BRANCH | awk \'{ print \$1}\' | sed -r 's/(^.{7}).*/\1/'",
                         returnStdout: true
                     ).trim()
         }
         dir('omr') {
-            git branch: OMR_BRANCH, url: OMR_REPO, poll: true, changelog: true
             SHAS['OMR'] = sh (
-                        script: 'git rev-parse --short HEAD',
+                        script: "git ls-remote $OMR_REPO | grep refs/heads/$OMR_BRANCH | awk \'{ print \$1}\' | sed -r 's/(^.{7}).*/\1/'",
                         returnStdout: true
                     ).trim()
         }
