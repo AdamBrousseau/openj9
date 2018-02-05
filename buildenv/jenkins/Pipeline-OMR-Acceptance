@@ -36,7 +36,6 @@ def TEST_JOB_NAME_PREFIX = 'Test-Sanity'
 def JOBS = [:]
 def platforms = [:]
 
-/*
 for (i=0; i < SPECS.size(); i++) {
     for (j=0; j < JAVA_VERSIONS.size(); j++) {
         JOBS["${JAVA_VERSIONS[${j}]}-${SPECS[${i}]}"] = [:]
@@ -59,7 +58,7 @@ for (i=0; i < SPECS.size(); i++) {
         }
     }
 }
-*/
+
 node('master') {
     checkout scm
     buildfile = load "${WORKSPACE}/buildenv/jenkins/pipeline-functions"
