@@ -42,20 +42,20 @@ for (i=0; i < SPECS.size(); i++) {
         def _j = j
         JOBS["${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}"] = [:]
             
-        JOBS["${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}"]['build_job_name'] = "${BUILD_JOB_NAME_PREFIX}-${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}"
-        JOBS["${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}"]['test_job_name'] = "${TEST_JOB_NAME_PREFIX}-${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}"
+        BUILD_JOB_NAME = "${BUILD_JOB_NAME_PREFIX}-${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}"
+        TEST_JOB_NAME = "${TEST_JOB_NAME_PREFIX}-${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}"
 
         //echo "JOBS[${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}]['build_job_name']"
         //echo "JOBS[${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}]['test_job_name']"
 /*
         platforms["${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}"] = {
-            stage ("${JOBS[${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}]['build_job_name']}") {
-                JOBS["${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}"]['build_job'] = build job: JOBS["${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}"]['build_job_name'], parameters: [string(name: 'OPENJDK_SHA', value: SHAS['OPENJDK']), string(name: 'OPENJ9_SHA', value: SHAS['OPENJ9']), string(name: 'OMR_SHA', value: SHAS['OMR'])]
-                JOBS["${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}"]['build_job_number'] = JOBS["${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}"]['build_job'].getNumber()
+            stage ("${BUILD_JOB_NAME}") {
+                JOBS["${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}"]['build_job'] = build job: BUILD_JOB_NAME, parameters: [string(name: 'OPENJDK_SHA', value: SHAS['OPENJDK']), string(name: 'OPENJ9_SHA', value: SHAS['OPENJ9']), string(name: 'OMR_SHA', value: SHAS['OMR'])]
+                //JOBS["${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}"]['build_job_number'] = JOBS["${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}"]['build_job'].getNumber()
             }
-            stage ("${JOBS[${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}]['test_job_name']}") {
-                JOBS["${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}"]['test_job'] = build job: JOBS["${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}"]['test_job_name'], parameters: [string(name: 'UPSTREAM_JOB_NAME', value: JOBS["${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}"]['build_job_name']), string(name: 'UPSTREAM_JOB_NUMBER', value: JOBS["${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}"]['build_job_number'])]
-                JOBS["${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}"]['test_job_number'] = JOBS["${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}"]['test_job'].getNumber()
+            stage ("${TEST_JOB_NAME}") {
+                JOBS["${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}"]['test_job'] = build job: TEST_JOB_NAME, parameters: [string(name: 'UPSTREAM_JOB_NAME', value: BUILD_JOB_NAME), string(name: 'UPSTREAM_JOB_NUMBER', value: JOBS["${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}"]['build_job_number'])]
+                //JOBS["${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}"]['test_job_number'] = JOBS["${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}"]['test_job'].getNumber()
             }
         }
 */
