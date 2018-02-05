@@ -40,7 +40,7 @@ for (i=0; i < SPECS.size(); i++) {
     def _i = i
     for (j=0; j < JAVA_VERSIONS.size(); j++) {
         def _j = j
-        JOBS["${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}"] = [:]
+        //JOBS["${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}"] = [:]
             
         BUILD_JOB_NAME = "${BUILD_JOB_NAME_PREFIX}-${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}"
         TEST_JOB_NAME = "${TEST_JOB_NAME_PREFIX}-${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}"
