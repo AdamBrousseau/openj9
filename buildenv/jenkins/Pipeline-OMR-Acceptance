@@ -1,0 +1,70 @@
+/*******************************************************************************
+ * Copyright (c) 2017, 2017 IBM Corp. and others
+ *
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License 2.0 which accompanies this
+ * distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+ * or the Apache License, Version 2.0 which accompanies this distribution and
+ * is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * This Source Code may also be made available under the following
+ * Secondary Licenses when the conditions for such availability set
+ * forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+ * General Public License, version 2 with the GNU Classpath
+ * Exception [1] and GNU General Public License, version 2 with the
+ * OpenJDK Assembly Exception [2].
+ *
+ * [1] https://www.gnu.org/software/classpath/license.html
+ * [2] http://openjdk.java.net/legal/assembly-exception.html
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ *******************************************************************************/
+
+def OPENJDK_REPO = 'https://github.com/ibmruntimes/openj9-openjdk-jdk8.git'
+def OPENJDK_BRANCH = 'openj9'
+def OPENJ9_REPO = 'https://github.com/eclipse/openj9.git'
+def OPENJ9_BRANCH = 'master'
+def OMR_REPO = 'https://github.com/eclipse/openj9-omr.git'
+def OMR_BRANCH = 'master'
+
+def SPECS = [ "linux_390-64_cmprssptrs", "linux_ppc-64_cmprssptrs_le" ]
+def JAVA_VERSIONS = [ "JDK8" ]
+
+def BUILD_JOB_NAME_PREFIX = 'Build-'
+def TEST_JOB_NAME_PREFIX = 'Test-Sanity'
+
+def JOBS = [:]
+def platforms = [:]
+
+/*
+for (i=0; i < SPECS.size(); i++) {
+    for (j=0; j < JAVA_VERSIONS.size(); j++) {
+        JOBS["${JAVA_VERSIONS[${j}]}-${SPECS[${i}]}"] = [:]
+            
+        JOBS["${JAVA_VERSIONS[${j}]}-${SPECS[${i}]}"]['build_job_name'] = "${BUILD_JOB_NAME_PREFIX}-${JAVA_VERSIONS[${j}]}-${SPECS[${i}]}"
+        JOBS["${JAVA_VERSIONS[${j}]}-${SPECS[${i}]}"]['test_job_name'] = "${TEST_JOB_NAME_PREFIX}-${JAVA_VERSIONS[${j}]}-${SPECS[${i}]}"
+
+        //echo "JOBS[${JAVA_VERSIONS[${j}]}-${SPECS[${i}]}]['build_job_name']"
+        //echo "JOBS[${JAVA_VERSIONS[${j}]}-${SPECS[${i}]}]['test_job_name']"
+
+        platforms["${JAVA_VERSIONS[${j}]}-${SPECS[${i}]}"] = {
+            stage ("${JOBS[${JAVA_VERSIONS[${j}]}-${SPECS[${i}]}]['build_job_name']}") {
+                JOBS["${JAVA_VERSIONS[${j}]}-${SPECS[${i}]}"]['build_job'] = build job: JOBS["${JAVA_VERSIONS[${j}]}-${SPECS[${i}]}"]['build_job_name'], parameters: [string(name: 'OPENJDK_SHA', value: SHAS['OPENJDK']), string(name: 'OPENJ9_SHA', value: SHAS['OPENJ9']), string(name: 'OMR_SHA', value: SHAS['OMR'])]
+                JOBS["${JAVA_VERSIONS[${j}]}-${SPECS[${i}]}"]['build_job_number'] = JOBS["${JAVA_VERSIONS[${j}]}-${SPECS[${i}]}"]['build_job'].getNumber()
+            }
+            stage ("${JOBS[${JAVA_VERSIONS[${j}]}-${SPECS[${i}]}]['test_job_name']}") {
+                JOBS["${JAVA_VERSIONS[${j}]}-${SPECS[${i}]}"]['test_job'] = build job: JOBS["${JAVA_VERSIONS[${j}]}-${SPECS[${i}]}"]['test_job_name'], parameters: [string(name: 'UPSTREAM_JOB_NAME', value: JOBS["${JAVA_VERSIONS[${j}]}-${SPECS[${i}]}"]['build_job_name']), string(name: 'UPSTREAM_JOB_NUMBER', value: JOBS["${JAVA_VERSIONS[${j}]}-${SPECS[${i}]}"]['build_job_number'])]
+                JOBS["${JAVA_VERSIONS[${j}]}-${SPECS[${i}]}"]['test_job_number'] = JOBS["${JAVA_VERSIONS[${j}]}-${SPECS[${i}]}"]['test_job'].getNumber()
+            }
+        }
+    }
+}
+*/
+node('master') {
+    checkout scm
+    buildfile = load "${WORKSPACE}/buildenv/jenkins/pipeline-functions"
+    SHAS = buildfile.get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH)
+}
+
+//parallel platforms
+//PROMOTE_JOB = promote_omr(SHAS['OMR'], SHAS['OPENJ9'], SHAS['OPENJDK'])

@@ -64,4 +64,11 @@ def build_with_one_upstream(JOB_NAME, UPSTREAM_JOB_NAME, UPSTREAM_JOB_NUMBER) {
         return JOB
     }
 }
+
+def promote_omr(OMR_SHA, OPENJ9_SHA, OPENJDK_SHA) {
+    stage ('Promote') {
+        JOB = build job: 'Promote-OpenJ9-OMR-master-to-openj9', parameters: [string(name: 'OMR_COMMIT', value: OMR_SHA), string(name: 'OPENJ9_COMMIT', value: OPENJ9_SHA), string(name: 'OPENJDK_COMMIT', value: OPENJDK_SHA)]
+        return JOB
+    }
+}
 return this
