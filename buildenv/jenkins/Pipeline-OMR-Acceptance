@@ -36,6 +36,7 @@ def TEST_JOB_NAME_PREFIX = 'Test-Sanity'
 def JOBS = [:]
 def platforms = [:]
 
+node('master') {
 for (i=0; i < SPECS.size(); i++) {
     def _i = i
     for (j=0; j < JAVA_VERSIONS.size(); j++) {
@@ -62,6 +63,7 @@ for (i=0; i < SPECS.size(); i++) {
         }
 */
     }
+}
 }
 
 node('master') {
