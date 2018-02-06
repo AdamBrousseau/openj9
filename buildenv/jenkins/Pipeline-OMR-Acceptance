@@ -67,5 +67,5 @@ node('master') {
     SHAS = buildfile.get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH)
 }
 
-//parallel platforms
+parallel platforms
 //PROMOTE_JOB = promote_omr(SHAS['OMR'], SHAS['OPENJ9'], SHAS['OPENJDK'])
