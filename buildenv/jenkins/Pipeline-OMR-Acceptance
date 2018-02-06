@@ -30,7 +30,7 @@ def OMR_BRANCH = 'master'
 def SPECS = [ "linux_390-64_cmprssptrs", "linux_ppc-64_cmprssptrs_le" ]
 def JAVA_VERSIONS = [ "JDK8", "JDK9" ]
 
-def BUILD_JOB_NAME_PREFIX = 'Build-'
+def BUILD_JOB_NAME_PREFIX = 'Build'
 def TEST_JOB_NAME_PREFIX = 'Test-Sanity'
 
 JOBS = [:]
