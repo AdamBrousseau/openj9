@@ -43,7 +43,7 @@ def create_build(BUILD_JOB_NAME, TEST_JOB_NAME, VERSION, SPEC, INDEX) {
                 JOBS[INDEX]['build_job_number'] = JOBS[INDEX]['build_job'].getNumber()
             }
             stage ("${TEST_JOB_NAME}") {
-                JOBS[JOB_INDEX]['test_job'] = build job: TEST_JOB_NAME, parameters: [string(name: 'UPSTREAM_JOB_NAME', value: BUILD_JOB_NAME), string(name: 'UPSTREAM_JOB_NUMBER', value: JOBS[INDEX]['build_job_number'])]
+                JOBS[INDEX]['test_job'] = build job: TEST_JOB_NAME, parameters: [string(name: 'UPSTREAM_JOB_NAME', value: BUILD_JOB_NAME), string(name: 'UPSTREAM_JOB_NUMBER', value: JOBS[INDEX]['build_job_number'])]
                 JOBS[INDEX]['test_job_number'] = JOBS[INDEX]['test_job'].getNumber()
             }
     }
