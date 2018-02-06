@@ -36,23 +36,26 @@ def TEST_JOB_NAME_PREFIX = 'Test-Sanity'
 def JOBS = [:]
 def platforms = [:]
 
-node('master') {
 for (i=0; i < SPECS.size(); i++) {
-    def _i = i
     for (j=0; j < JAVA_VERSIONS.size(); j++) {
-        def _j = j
         //JOBS["${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}"] = [:]
             
         //BUILD_JOB_NAME = "${BUILD_JOB_NAME_PREFIX}-${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}"
         //TEST_JOB_NAME = "${TEST_JOB_NAME_PREFIX}-${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}"
         echo "hello"
-        echo "${JAVA_VERSIONS[${_j}]}"
-        echo "${SPECS[${_i}]}"
+        echo "${JAVA_VERSIONS[j]}"
+        echo "${SPECS[i]}"
         //echo "JOBS[${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}]['build_job_name']"
         //echo "JOBS[${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}]['test_job_name']"
 /*
-        platforms["${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}"] = {
-            stage ("${BUILD_JOB_NAME}") {
+        platforms["${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}"] = create_build(BUILD_JOB_NAME)
+*/
+    }
+}
+/*
+def create_build() {
+    return {
+        stage ("${BUILD_JOB_NAME}") {
                 JOBS["${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}"]['build_job'] = build job: BUILD_JOB_NAME, parameters: [string(name: 'OPENJDK_SHA', value: SHAS['OPENJDK']), string(name: 'OPENJ9_SHA', value: SHAS['OPENJ9']), string(name: 'OMR_SHA', value: SHAS['OMR'])]
                 //JOBS["${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}"]['build_job_number'] = JOBS["${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}"]['build_job'].getNumber()
             }
@@ -60,12 +63,9 @@ for (i=0; i < SPECS.size(); i++) {
                 JOBS["${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}"]['test_job'] = build job: TEST_JOB_NAME, parameters: [string(name: 'UPSTREAM_JOB_NAME', value: BUILD_JOB_NAME), string(name: 'UPSTREAM_JOB_NUMBER', value: JOBS["${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}"]['build_job_number'])]
                 //JOBS["${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}"]['test_job_number'] = JOBS["${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}"]['test_job'].getNumber()
             }
-        }
-*/
     }
 }
-}
-
+*/
 node('master') {
     checkout scm
     buildfile = load "${WORKSPACE}/buildenv/jenkins/pipeline-functions"
