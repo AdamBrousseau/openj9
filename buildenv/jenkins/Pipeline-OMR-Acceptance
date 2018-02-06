@@ -46,8 +46,8 @@ for (i=0; i < SPECS.size(); i++) {
         //BUILD_JOB_NAME = "${BUILD_JOB_NAME_PREFIX}-${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}"
         //TEST_JOB_NAME = "${TEST_JOB_NAME_PREFIX}-${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}"
         echo "hello"
-        //echo "${JAVA_VERSIONS[${_j}]}"
-        //echo "${SPECS[${_i}]}"
+        echo "${JAVA_VERSIONS[${_j}]}"
+        echo "${SPECS[${_i}]}"
         //echo "JOBS[${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}]['build_job_name']"
         //echo "JOBS[${JAVA_VERSIONS[${_j}]}-${SPECS[${_i}]}]['test_job_name']"
 /*
