@@ -20,8 +20,10 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  *******************************************************************************/
 
-def OPENJDK_REPO = 'https://github.com/ibmruntimes/openj9-openjdk-jdk8.git'
-def OPENJDK_BRANCH = 'openj9'
+def OPENJDK8_REPO = 'https://github.com/ibmruntimes/openj9-openjdk-jdk8.git'
+def OPENJDK8_BRANCH = 'openj9'
+def OPENJDK9_REPO = 'https://github.com/ibmruntimes/openj9-openjdk-jdk9.git'
+def OPENJDK9_BRANCH = 'openj9'
 def OPENJ9_REPO = 'https://github.com/eclipse/openj9.git'
 def OPENJ9_BRANCH = 'master'
 def OMR_REPO = 'https://github.com/eclipse/openj9-omr.git'
@@ -64,7 +66,10 @@ for (i=0; i < SPECS.size(); i++) {
 node('master') {
     checkout scm
     buildfile = load "${WORKSPACE}/buildenv/jenkins/pipeline-functions"
-    SHAS = buildfile.get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH)
+    OPENJ9_SHA = buildfile.get_sha(OPENJ9_REPO, OPENJ9_BRANCH)
+    OMR_SHA = buildfile.get_sha(OMR_REPO, OMR_BRANCH)
+    OPENJDK8_SHA = buildfile.get_sha(OPENJDK8_REPO, OPENJDK8_BRANCH)
+    OPENJDK9_SHA = buildfile.get_sha(OPENJDK9_REPO, OPENJDK9_BRANCH)
 }
 
 parallel platforms

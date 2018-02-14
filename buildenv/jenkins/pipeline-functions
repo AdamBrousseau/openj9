@@ -26,22 +26,13 @@
         dir('openjdk') {
             echo OPENJDK_REPO
             echo "${OPENJDK_REPO}"
-            SHAS['OPENJDK'] = sh (
-                        script: "git ls-remote $OPENJDK_REPO | grep refs/heads/$OPENJDK_BRANCH | awk \'{ print \$1 }\' | sed -r 's/(^.{7}).*/\\1/'",
-                        returnStdout: true
-                    ).trim()
+            SHAS['OPENJDK'] = get_sha(OPENJDK_REPO, OPENJDK_BRANCH)
         }
         dir('openj9') {
-            SHAS['OPENJ9'] = sh (
-                        script: "git ls-remote $OPENJ9_REPO | grep refs/heads/$OPENJ9_BRANCH | awk \'{ print \$1 }\' | sed -r 's/(^.{7}).*/\\1/'",
-                        returnStdout: true
-                    ).trim()
+            SHAS['OPENJ9'] = get_sha(OPENJ9_REPO, OPENJ9_BRANCH)
         }
         dir('omr') {
-            SHAS['OMR'] = sh (
-                        script: "git ls-remote $OMR_REPO | grep refs/heads/$OMR_BRANCH | awk \'{ print \$1 }\' | sed -r 's/(^.{7}).*/\\1/'",
-                        returnStdout: true
-                    ).trim()
+            SHAS['OMR'] = get_sha(OMR_REPO, OMR_BRANCH)
         }
         echo "OPENJDK_SHA:${SHAS['OPENJDK']}"
         echo "OPENJ9_SHA:${SHAS['OPENJ9']}"
@@ -61,6 +52,10 @@ def get_sha(REPO, BRANCH) {
     }
     return SHA
     }
+}
+
+def get_repo_name(REPO) {
+    return REPO.substring(REPO.lastIndexOf("/") + 1, lastIndexOf(".git"))
 }
 
 def build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, OMR_REPO, OMR_BRANCH, OMR_SHA) {
