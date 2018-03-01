@@ -49,9 +49,9 @@ node('worker') {
     currentBuild.description = "OpenJ9: ${OPENJ9_SHA}<br/>OMR: ${OMR_SHA}"
 
     SDK_VERSIONS.each { SDK_VERSION ->
-        OPENJDK_REPO = OPENJDK_REPOS["${SDK_VERSION}"]
-        OPENJDK_BRANCH = OPENJDK_BRANCHES["${SDK_VERSION}"]
-        OPENJDK_SHA = buildFile.get_sha(OPENJDK_REPO, OPENJDK_BRANCH)
+        def OPENJDK_REPO = OPENJDK_REPOS["${SDK_VERSION}"]
+        def OPENJDK_BRANCH = OPENJDK_BRANCHES["${SDK_VERSION}"]
+        def OPENJDK_SHA = buildFile.get_sha(OPENJDK_REPO, OPENJDK_BRANCH)
 
         // append OpenJDK SHA to the build description
         currentBuild.description += "<br/>OpenJDK${SDK_VERSION}: ${OPENJDK_SHA}"
@@ -62,8 +62,10 @@ node('worker') {
         echo "OMR_SHA:${OMR_SHA}"
 
         SPECS.each { SPEC ->
-             builds["build_JDK${SDK_VERSION} ${SPEC}"] = { build(OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, OMR_REPO, OMR_BRANCH, OMR_SHA, SDK_VERSION, SPEC) }
-         }
+             builds["build_JDK${SDK_VERSION} ${SPEC}"] = {
+                build(OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, OMR_REPO, OMR_BRANCH, OMR_SHA, SDK_VERSION, SPEC)
+             }
+        }
     }
 
     cleanWs()
@@ -78,7 +80,12 @@ parallel builds
 def build(OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, OMR_REPO, OMR_BRANCH, OMR_SHA, SDK_VERSION, SPEC) {
     stage ("Build JDK${SDK_VERSION} ${SPEC}") {
         def JOB_NAME = "Pipeline-Build-Test-JDK${SDK_VERSION}-${SPEC}"
-        JOB = build job: JOB_NAME,
+        echo "SDK: $SDK_VERSION"
+                echo "SPEC: $SPEC"
+                echo "OPENJDK_REPO: $OPENJDK_REPO"
+                echo "OPENJDK_BRANCH: $OPENJDK_BRANCH"
+                echo "OPENJDK_SHA: $OPENJDK_SHA"
+            /*JOB = build job: JOB_NAME,
                 parameters: [
                     string(name: 'OPENJDK_REPO', value: OPENJDK_REPO),
                     string(name: 'OPENJDK_BRANCH', value: OPENJDK_BRANCH),
@@ -89,6 +96,6 @@ def build(OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA, OPENJ9_REPO, OPENJ9_BRANCH,
                     string(name: 'OMR_REPO', value: OMR_REPO),
                     string(name: 'OMR_BRANCH', value: OMR_BRANCH),
                     string(name: 'OMR_SHA', value: OMR_SHA)]
-        return JOB
+        return JOB*/
     }
 }
