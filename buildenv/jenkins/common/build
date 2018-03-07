@@ -154,6 +154,13 @@ def checkout_pullrequest() {
                         openjdk_bool = true
                         OPENJDK_PR = "${PR_ID}"
                         echo "Dependent OpenJDK change found: #${PR_ID}"
+
+                        // Verify OpenJDK Repo matches SDK Version of build.
+                        // eg. Cannot checkout a JDK8 PR for a JDK9 build
+                        echo SDK_VERSION
+                        echo REPO
+                        error()
+
                     } else {
                         echo "error: Cannot specify 2 OpenJDK Repos"
                         error()
