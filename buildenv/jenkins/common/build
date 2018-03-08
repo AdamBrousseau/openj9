@@ -155,11 +155,42 @@ def checkout_pullrequest() {
                         OPENJDK_PR = "${PR_ID}"
                         echo "Dependent OpenJDK change found: #${PR_ID}"
 
+                        fetch_pr_refs()
+                        
                         // Verify OpenJDK Repo matches SDK Version of build.
                         // eg. Cannot checkout a JDK8 PR for a JDK9 build
                         echo SDK_VERSION
                         echo REPO
-                        error()
+
+                        // For SDK 8/9/10, the Repo has the SDK version in the name
+                        // if ((SDK_VERSION == '8') || (SDK_VERSION == '9') && (REPO != "openj9-openjdk-jdk${SDK_VERSION}")) {
+                            if (REPO != "openj9-openjdk-jdk${SDK_VERSION}") {
+                            error "Trying to build SDK${SDK_VERSION} with a dependent change from repo '${REPO}' is not possible"
+                        } //else {
+                            // // For SDK 11+ the Repo is shared and each branch is a different SDK Version
+                            // // The branch name has the SDK version
+
+                            // // Verify target branch of openj9-openjdk matches SDK_VERSION
+                            // // Get SHA at HEAD of jdk branch
+                            // EXPECTED_TARGET_SHA = sh (
+                            //     script: "git rev-parse refs/remotes/origin/jdk${SDK_VERSION}",
+                            //     returnStdout: true
+                            // ).trim()
+                            // // Get SHA of PR merge commit
+                            // MERGE_SHA = sh (
+                            //     script: "git rev-parse refs/remotes/origin/pr/${ID}/merge",
+                            //     returnStdout: true
+                            // ).trim()
+                            // // Get Parent commits of PR merge commit
+                            // // First commit/SHA printed is Target branch, second is PR commit
+                            // ACTUAL_TARGET_SHA = sh (
+                            //     script: "git log --pretty=%P -n 1 ${MERGE_SHA} | awk '{print $1}'"),
+                            //     returnStdout: true
+                            // ).trim()
+                            // if (EXPECTED_TARGET_SHA != ACTUAL_TARGET_SHA) {
+                            //     error "Trying to build SDK${SDK_VERSION} with a dependent change for a different SDK version is not possible"
+                            // }
+                        }
 
                     } else {
                         echo "error: Cannot specify 2 OpenJDK Repos"
@@ -173,13 +204,13 @@ def checkout_pullrequest() {
         }
     }
 
-    // Checkout dependent PRs, if any were specified
     if (openjdk_bool) {
         checkout_pullrequest(OPENJDK_PR)
     }
 
     sh 'bash ./get_source.sh'
 
+    // Checkout dependent PRs, if any were specified
     if (openj9_bool) {
         dir ('openj9') {
             checkout_pullrequest(OPENJ9_PR)
@@ -197,8 +228,12 @@ def checkout_pullrequest() {
 }
 
 def checkout_pullrequest(ID) {
-    sh "git fetch --tags --progress origin +refs/pull/*:refs/remotes/origin/pr/*"
+    fetch_pr_refs()
     sh "git checkout refs/remotes/origin/pr/${ID}/merge"
+}
+
+def fetch_pr_refs(){
+    sh "git fetch --tags --progress origin +refs/pull/*:refs/remotes/origin/pr/*"
 }
 
 def build() {
