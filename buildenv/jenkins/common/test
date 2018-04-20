@@ -91,18 +91,6 @@ def test() {
     }
 }
 
-def test_clean() {
-    stage('Test') {
-        timestamps {
-            dir ('openj9/test/TestConfig') {
-                withEnv(["SPEC=${SPEC}", "JAVA_BIN=${JAVA_BIN}", "JAVA_VERSION=${JAVA_VERSION}"]) {
-                    sh "make clean"
-                }
-            }
-        }
-    }
-}
-
 def publish() {
     stage('Publish Test Results') {
         timestamps {

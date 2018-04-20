@@ -244,10 +244,9 @@ def set_build_variables() {
 def set_test_variables() {
     set_release()
     set_jdk_folder()
-    if ( SDK_VERSION == 'valhalla_nestmates') {
+    
+    if ( SDK_VERSION ==~ .*valhalla_nestmates) {
         JAVA_VERSION = "Valhalla"
-    } else if ( SDK_VERSION == 'panama') {
-        JAVA_VERSION = "Panama"
     } else {
         JAVA_VERSION = "SE" + "${SDK_VERSION}" + "0"
     }
