@@ -253,6 +253,10 @@ def set_test_variables() {
     TEST_DEPENDENCIES_JOB_NAME = VARIABLES.test_dependencies_job_name
 }
 
+
+
+
+
 /*
 * Set TESTS_TARGETS, indicating the level of testing. 
 */
