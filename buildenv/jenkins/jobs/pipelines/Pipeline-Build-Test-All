@@ -21,12 +21,13 @@
  *******************************************************************************/
 
 def SDK_VERSIONS = ['8', '9', '10']
-def SPECS = ['linux_ppc-64_cmprssptrs_le',
-            'linux_390-64_cmprssptrs',
-            'aix_ppc-64_cmprssptrs',
-            'linux_x86-64_cmprssptrs',
-            'linux_x86-64',
-            'win_x86-64_cmprssptrs']
+def SPECS = [:]
+SPECS['linux_ppc-64_cmprssptrs_le'] = ['8':true, '9':true, '10':true]
+SPECS['linux_390-64_cmprssptrs'] = ['8':true, '9':true, '10':true]
+SPECS['aix_ppc-64_cmprssptrs'] = ['8':true, '9':true, '10':true]
+SPECS['linux_x86-64_cmprssptrs'] = ['8':true, '9':true, '10':true]
+SPECS['linux_x86-64'] = ['8':true, '9':true, '10':true]
+SPECS['win_x86-64_cmprssptrs'] = ['8':true, '9':true, '10':true]
 
 def OPENJDK_REPOS = ['8': 'https://github.com/ibmruntimes/openj9-openjdk-jdk8.git',
                      '9': 'https://github.com/ibmruntimes/openj9-openjdk-jdk9.git',
