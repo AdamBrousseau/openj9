@@ -475,7 +475,7 @@ def convert_url(value) {
 
     if ((value && value.startsWith('https://')) && USER_CREDENTIALS_ID) {
         // private repos, have credentials, use SSH protocol
-        return value.replace('https://', 'git@').repleceFirst('/', ':')
+        return value.replace('https://', 'git@').replaceFirst('/', ':')
     }
 
     return value
