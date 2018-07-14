@@ -359,7 +359,9 @@ def set_test_targets() {
 }
 
 def set_slack_channel() {
-    SLACK_CHANNEL = VARIABLES.slack_channel
+    if (!SLACK_CHANNEL) {
+        SLACK_CHANNEL = VARIABLES.slack_channel
+    }
 }
 
 /*
