@@ -359,7 +359,8 @@ def set_test_targets() {
 }
 
 def set_slack_channel() {
-    if (!SLACK_CHANNEL) {
+    SLACK_CHANNEL = params.SLACK_CHANNEL
+    if (!SLACK_CHANNEL && (!params.PERSONAL_BUILD || params.PERSONAL_BUILD != 'true')) {
         SLACK_CHANNEL = VARIABLES.slack_channel
     }
 }
