@@ -172,6 +172,8 @@ def build_with_slack(JOB_NAME, PARAMETERS, PERSONAL_BUILD) {
             echo "Couldn't retrieve downstream failed job url"
         }
         MESSAGE = "Downstream job ${JOB_NAME} did not pass. Job Number: ${DOWNSTREAM_JOB_NUMBER} Job URL: ${DOWNSTREAM_JOB_URL}"
+        echo "SLACK_CHANNEL:${SLACK_CHANNEL}"
+        echo "PERSONAL_BUILD:${PERSONAL_BUILD}"
         if (SLACK_CHANNEL && (!PERSONAL_BUILD || PERSONAL_BUILD != 'true')) {
             slackSend channel: SLACK_CHANNEL, color: 'danger', message: "Failure in: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)\nDownstream Job: ${JOB_NAME} #${DOWNSTREAM_JOB_NUMBER} (<${DOWNSTREAM_JOB_URL}|Open>)"
         }
