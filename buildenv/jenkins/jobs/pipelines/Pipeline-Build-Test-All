@@ -223,6 +223,7 @@ def get_specs(SUPPORTED_SPECS) {
                 echo "Warning: Selected Java version[s](${RELEASES.toString()}) for ${SPEC} is not supported(nothing to do)!"
                 continue
             }
+            echo "SPEC_RELEASES:'${SPEC_RELEASES}'"
         }
 
         // populate the releases by specs map
