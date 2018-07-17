@@ -53,15 +53,13 @@ def parse_variables_file(){
 def get_variables_file() {
     if (params.VARIABLE_FILE && params.VENDOR_REPO && params.VENDOR_BRANCH) {
         stage('Get Variables File') {
-            timestamps {
-                if (params.VENDOR_CREDENTIALS_ID) {
-                    sshagent(credentials:["${params.VENDOR_CREDENTIALS_ID}"]) {
-                        checkout_file()
-                    }
-                } else {
+            if (params.VENDOR_CREDENTIALS_ID) {
+                sshagent(credentials:["${params.VENDOR_CREDENTIALS_ID}"]) {
                     checkout_file()
                 }
-             }
+            } else {
+                checkout_file()
+            }
         }
     }
 
