@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2017, 2018 IBM Corp. and others
+Copyright (c) 2017, 2019 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,41 +27,44 @@ This folder contains Jenkins pipeline scripts that are used in the OpenJ9 Jenkin
 ### Triggering Pull Request Builds from Github
 
 - You can request a PR build to do compile or compile & test
-- Current supported test levels are functional sanity and functional extended
+- Current supported test levels are sanity & extended
+- Current supported test types are functional & system
 - Current available platforms are 
-    - Linux x86 (xLinux)
-    - Linux x86 largeheap/non-compressed refs (xlinuxlargeheap)
+    - Linux x86-64 (xLinux)
+    - Linux x86-64 largeheap/non-compressed refs (xlinuxlargeheap)
     - Linux s390x (zLinux)
-    - Linux PPCLE (pLinux)
-    - AIX PPC (aix)
-    - Windows 64 bits (win)
-    - Windows 32 bits (win32) - supported on JDK8 only
+    - Linux ppc64le (pLinux)
+    - AIX ppc64 (aix)
+    - Windows x86-64 (win)
+    - Windows x86 (win32) - supported on JDK8 only
+    - OSX x86-64 (osx)
+    - OSX x86-64 largeheap/non-compressed refs (osxlargeheap)
 - OpenJ9 committers can request builds by commenting in a pull request
-    - Format: `Jenkins <build type> <level> <platform>[,<platform>,...,<platform>] jdk<version>[,jdk<version>,...,jdk<version>]`
+    - Format: `Jenkins <build type> <level>.<test type> <platform>[,<platform>,...,<platform>] jdk<version>[,jdk<version>,...,jdk<version>]`
     - `<build type>` is compile | test
     - `<level>` is sanity | extended (required only for "test" `<build type>`)
-    - `<platform>` is aix | xlinux | xlinuxlargeheap | zlinux | plinux | win | win32
-    - `<version>` is the number of the supported release, e.g. 8 | 11 | n 
-- Note: You can use keyword `all` for platform
+    - `<test type>` is functional | system
+    - `<platform>` is one of the platform shorthands above
+    - `<version>` is the number of the supported release, e.g. 8 | 11
+- Note: You can use keyword `all` for platform but not for test level/type or JDK versions.
+- Note: For backward compatability `<level>.<test type>` equal to `sanity` or `extended` is acceptable and will map to `sanity.functional` and `extended.functional` respectively.
 
 ###### Examples
 - Request a Compile-only build on all platforms and multiple versions by commenting in a PR
     - `Jenkins compile all jdk8,jdk11`
-- Request a Sanity build on zLinux and multiple versions
-    - `Jenkins test sanity zlinux jdk8,jdk11`
-- Request an Extended build on pLinux for a single version
-    - `Jenkins test extended plinux jdk8`
-- Request a Sanity build on z,p Linux for multiple versions
+- Request a functional sanity build on zLinux and multiple versions
+    - `Jenkins test functional.sanity zlinux jdk8,jdk11`
+- Request an functional and system extended build on pLinux for a single version
+    - `Jenkins test extended.functional,extended.system plinux jdk8`
+- Request a sanity build on z,p Linux for multiple versions
     - `Jenkins test sanity zlinux,plinux jdk8,jdk9`
-- Request Sanity tests on all platforms and multiple versions
-    - `Jenkins test sanity all jdk8,jdk11`
+- Request sanity.system test on all platforms and multiple versions
+    - `Jenkins test sanity.system all jdk8,jdk11`
 
-You can also request a Pull Request build from the Eclipse OpenJ9 repository - [openj9](https://github.com/eclipse/openj9) - or the Extensions OpenJDK\* for Eclipse OpenJ9 repositories:
+You can request a Pull Request build from the Eclipse OpenJ9 repository - [openj9](https://github.com/eclipse/openj9) - or the Extensions OpenJDK\* for Eclipse OpenJ9 repositories:
 
 - openj9-openjdk-jdk: https://github.com/ibmruntimes/openj9-openjdk-jdk
 - openj9-openjdk-jdk`<version>`: `https://github.com/ibmruntimes/openj9-openjdk-jdk<version>`
-
-###### Note: When specifying a dependent change in an OpenJDK extensions repo, you can only build the SDK version that matches the repo where the dependent change lives. Eg. You cannot build JDK8 with a PR in openj9-openjdk-jdk9.
 
 ##### Dependent Changes
 
@@ -80,6 +83,8 @@ You can also request a Pull Request build from the Eclipse OpenJ9 repository - [
 - Ex. If you have a dependent change and only want one platform, depends comes last
     - `Jenkins test sanity zlinux jdk8 depends eclipse/omr#123`
 
+###### Note: When specifying a dependent change in an OpenJDK extensions repo, you can only build the SDK version that matches the repo where the dependent change lives. Eg. You cannot build JDK8 with a PR in openj9-openjdk-jdk9.
+
 ##### Other Pull Requests builds
 
 - To trigger a Line Endings Check
@@ -91,49 +96,26 @@ You can also request a Pull Request build from the Eclipse OpenJ9 repository - [
 - To trigger a SignedOffBy Check
    - `Jenkins signed off by check`
 
-##### PullRequest Trigger Regexes
-Having a complicated regex in the pull request trigger is what allows us to launch exactly the right combination of builds we need without having to make several trigger comments. The following are examples of what regexes we use in the various jobs.
-
-- Openj9 Repo
-    - Compile
-        - `.*(\n)?\bjenkins\s+compile\b\s*(((all|(([a-z]+(32)?,)*<platform>(,[a-z]+(32)?)*))\s*(jdk[0-9n]+,)*jdk<version>(,jdk[0-9n]+)*)(\s+depends.*)?)(\n)?.*`
-    - Test
-        - `.*(\n)?\bjenkins\s+test\s+<level>\b\s*(((all|(([a-z]+(32)?,)*<platform>(,[a-z]+(32)?)*))\s*(jdk[0-9n]+,)*jdk<version>(,jdk[0-9n]+)*)(\s+depends.*)?)(\n)?.*`
-
-- OpenJDK Extensions repos
-    - Compile
-        - `.*(\n)?\bjenkins\s+compile\b\s*(((all|(([a-z]+(32)?,)*<platform>(,[a-z]+(32)?)*))\s*jdk<version>)(\s+depends.*)?))(\n)?.*`
-    - Test
-        - `.*(\n)?\bjenkins\s+test\s+<level>\b\s*(((all|([a-z]+(32)?,)*<platform>(,[a-z]+(32?))*)\s*jdk<version>)(\s+depends.*)?)(\n)?.*`
-
-
 ### Jenkins Pipelines
 
 In this section:
-- `<platform>` is aix_ppc-64_cmprssptrs | linux_390-64_cmprssptrs | linux_ppc-64_cmprssptrs_le | linux_x86-64 | linux_x86-64_cmprssptrs | win_x86-64_cmprssptrs | win_x86
+- `<platform>` is the full spec name eg. aix_ppc-64_cmprssptrs
 - `<repo>` is the Eclipse OpenJ9 repository or an Extensions OpenJDK\* for Eclipse OpenJ9 repository, e.g. OpenJ9 | OpenJDK`<version>`
 
 #### Pull Requests
 
 Pull Requests for all platforms and versions are available [**here**](https://ci.eclipse.org/openj9/view/Pull%20Requests/).
 
-- PullRequest-Compile-JDK`<version>`-`<platform>`-`<repo>`
-    - Description:
-        - Compile Eclipse OpenJ9 on `<platform>` for Extensions OpenJDK`<version>`
-    - Trigger:
-        - Github PR comment example `Jenkins compile <platform> jdk<version>`
+For Compile & Test PRs, there is a single top level job (for each repository) that connects Jenkins and the Github repo.
+This job will trigger downstream jobs based on what is requested in the pull request trigger comment (ghprbCommentBody)
 
-- PullRequest-Extended-JDK`<version>`-`<platform>`-`<repo>`
+- PullRequest-`<repo>`
     - Description:
-        - Compile Eclipse OpenJ9 on `<platform>` for Extensions OpenJDK`<version>` and run extended tests
+        - Setup job that launches downstream Pipeline job(s)
     - Trigger:
-        - Github PR comment `Jenkins test extended <platform> jdk<version>`
+        - Github PR comment `Jenkins (compile|test).*`
 
-- PullRequest-Sanity-JDK`<version>`-`<platform>`-`<repo>`
-    - Description:
-        - Compile Eclipse OpenJ9 on `<platform>` for Extensions OpenJDK`<version>` and run sanity tests
-    - Trigger:
-        - Github PR comment `Jenkins test sanity <platform> jdk<version>`
+Other PR jobs
 
 - PullRequest-LineEndingsCheck-`<repo>`
     - Description:
