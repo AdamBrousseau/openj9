@@ -165,7 +165,29 @@ def set_build_status(REPO, CONTEXT, SHA, URL, STATE, MESSAGE) {
     ]);
 }
 
-def build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, OMR_REPO, OMR_BRANCH, OMR_SHA, VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, VENDOR_CREDENTIALS_ID, NODE, SETUP_LABEL, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER) {
+def cancel_running_builds(JOB_NAME, BUILD_IDENTIFIER) {
+    echo "Looking to stop running jobs:'${JOB_NAME}' from build:'${BUILD_IDENTIFIER}'"
+    def build = Jenkins.instance.getAllItems(Job.class).findAll {
+        // Class hudson.model.FreeStyleProject
+        // or Class org.jenkinsci.plugins.workflow.job.WorkflowJob (pipelines)
+        // Only get builds matching JOB_NAME
+        (it.getName() == JOB_NAME)
+    }
+    // Should only have 1 matching build in the array
+    build[0]._getRuns().each { run ->
+        // get all runs/jobs from the build
+        // Class org.jenkinsci.plugins.workflow.job.WorkflowRun
+        // Only look for running jobs
+        if (!run.isBuilding()) { return }
+        // Only look for jobs matching the BUILD_IDENTIFIER
+        if (run.getEnvironment().get('BUILD_IDENTIFIER') != "${BUILD_IDENTIFIER}") { return }
+        echo "Cancelling Job:'${run}'"
+        run.doStop()
+    }
+    echo "Done stopping jobs"
+}
+
+def build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, OMR_REPO, OMR_BRANCH, OMR_SHA, VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, VENDOR_CREDENTIALS_ID, NODE, SETUP_LABEL, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, ghprbPullId, ghprbCommentBody, ghprbTargetBranch) {
     stage ("${BUILD_JOB_NAME}") {
         return build_with_slack(BUILD_JOB_NAME, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER,
             [string(name: 'OPENJDK_REPO', value: OPENJDK_REPO),
@@ -183,7 +205,11 @@ def build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA, OPENJ9_REPO
             string(name: 'VENDOR_CREDENTIALS_ID', value: VENDOR_CREDENTIALS_ID),
             string(name: 'NODE', value: NODE),
             string(name: 'SETUP_LABEL', value: SETUP_LABEL),
-            string(name: 'BUILD_IDENTIFIER', value: BUILD_IDENTIFIER)])
+            string(name: 'BUILD_IDENTIFIER', value: BUILD_IDENTIFIER),
+            string(name: 'ghprbPullId', value: ghprbPullId),
+            string(name: 'ghprbGhRepository', value: ghprbGhRepository),
+            string(name: 'ghprbCommentBody', value: ghprbCommentBody),
+            string(name: 'ghprbTargetBranch', value: ghprbTargetBranch)])
     }
 }
 
@@ -331,7 +357,7 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
 
     // compile the source and build the SDK
     def BUILD_JOB_NAME = "Adam_Build-JDK${SDK_VERSION}-${SPEC}"
-    jobs["build"] = build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, SHAS['OPENJDK'], OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], OMR_REPO, OMR_BRANCH, SHAS['OMR'], VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, VENDOR_CREDENTIALS_ID, BUILD_NODE, SETUP_LABEL, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER)
+    jobs["build"] = build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, SHAS['OPENJDK'], OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], OMR_REPO, OMR_BRANCH, SHAS['OMR'], VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, VENDOR_CREDENTIALS_ID, BUILD_NODE, SETUP_LABEL, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, ghprbPullId, ghprbCommentBody, ghprbTargetBranch)
 
     if (TESTS_TARGETS.trim() != "none") {
         def testjobs = [:]
@@ -348,11 +374,21 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
         def targets = TESTS_TARGETS.split(",")
         targets.each { target ->
             switch (target.trim().toLowerCase()) {
-                case "_sanity":
-                    TARGET_NAMES.addAll(["sanity.functional", "sanity.system"])
+                case ~/^(_)?sanity$/:
+                    if (params.ghprbPullId) {
+                        // Map Sanity to sanity.functional in PR builds.
+                        TARGET_NAMES.addAll(["sanity.functional"])
+                    } else {
+                        TARGET_NAMES.addAll(["sanity.functional", "sanity.system"])
+                    }
                     break
-                case "_extended":
-                    TARGET_NAMES.addAll(["extended.functional", "extended.system"])
+                case ~/^(_)?extended$/:
+                    if (params.ghprbPullId) {
+                        // Map Extended to extended.functional in PR builds.
+                        TARGET_NAMES.addAll(["extended.functional"])
+                    } else {
+                        TARGET_NAMES.addAll(["extended.functional", "extended.system"])
+                    }
                     break
                 default:
                     TARGET_NAMES.add(target.trim())
@@ -371,6 +407,11 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
             echo "Using ARTIFACTORY_CREDS:'${ARTIFACTORY_CREDS}'"
             echo "Using ARTIFACTORY_SERVER:'${ARTIFACTORY_SERVER}'"
         }
+
+        // For PullRequest Builds, overwrite the OpenJ9 sha for test jobs so they checkout the PR (OpenJ9 PRs only)
+        if (params.ghprbPullId && params.ghprbGhRepository == 'eclipse/openj9') {
+            SHAS['OPENJ9'] = "origin/pr/${params.ghprbPullId}/merge"
+        }
         for (name in TARGET_NAMES) {
             def TEST_FLAG
             if (name.contains('+jitaas')) {
@@ -379,6 +420,9 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
             }
             def TEST_JOB_NAME = "Test-${name}-JDK${SDK_VERSION}-${SPEC}"
             testjobs["${TEST_JOB_NAME}"] = {
+                if (params.ghprbPullId) {
+                    cancel_running_builds(TEST_JOB_NAME, BUILD_IDENTIFIER)
+                }
                 if (ARTIFACTORY_CREDS) {
                     jobs["${TEST_JOB_NAME}"] = build_with_artifactory(TEST_JOB_NAME, params.VARIABLE_FILE, params.VENDOR_REPO, params.VENDOR_BRANCH, params.VENDOR_CREDENTIALS_ID, params.TEST_NODE, OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, BUILD_LIST, CUSTOMIZED_SDK_URL, ARTIFACTORY_SERVER, ARTIFACTORY_CREDS, TEST_FLAG, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER)
                 } else {
