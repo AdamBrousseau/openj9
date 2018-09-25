@@ -557,6 +557,7 @@ def set_job_properties(JOB_TYPE) {
                 'OMR_REPO':'',
                 'OMR_BRANCH':'',
                 'OMR_SHA':'',
+		'NODE':'',
                 'VARIABLE_FILE':"${VARIABLE_FILE_DEFAULT}",
                 'VENDOR_REPO':"${VENDOR_REPO_DEFAULT}",
                 'VENDOR_BRANCH':"${VENDOR_BRANCH_DEFAULT}",
@@ -568,10 +569,6 @@ def set_job_properties(JOB_TYPE) {
             add_string_params(['TESTS_TARGETS':''])
         }
 
-        // Build - Commented out as there are currently no params specific to only Build
-        //if (JOB_TYPE == 'build') {
-
-        //}
 
         /********************
         * TRIGGER

@@ -246,8 +246,8 @@ def checkoutRef (REF) {
 def build() {
     stage('Compile') {
         timestamps {
-            withEnv(BUILD_ENV_VARS_LIST) {
-                sh "${BUILD_ENV_CMD} bash configure --with-freemarker-jar='$FREEMARKER' --with-boot-jdk='$BOOT_JDK' $EXTRA_CONFIGURE_OPTIONS && make $EXTRA_MAKE_OPTIONS all"
+            withEnv(['IBM_JAVA_OPTIONS=-Xgcthreads4']) {
+                sh "${BUILD_ENV_CMD} bash configure --with-freemarker-jar='$FREEMARKER' --with-boot-jdk='$BOOT_JDK' $EXTRA_CONFIGURE_OPTIONS && echo $IBM_JAVA_OPTIONS && make $EXTRA_MAKE_OPTIONS all"
             }
         }
     }
