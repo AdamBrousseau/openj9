@@ -85,21 +85,14 @@ RUN yum -y install \
     libdwarf-devel \
   && rm -rf /var/lib/apt/lists/*
 
-# Install autoconf version 2.69
-RUN cd /usr/src/ \
-  && wget https://fossies.org/linux/misc/autoconf-2.69.tar.gz \
-  && tar -xzf autoconf-2.69.tar.gz \
-  && rm -f autoconf-2.69.tar.gz \
-  && cd autoconf-2.69 \
-  && ./configure \
-  && make \
-  && make install
+# add user home/jenkins
+RUN useradd -ms /bin/bash ${USER} \
+  && mkdir /home/${USER}/.ssh/
+COPY authorized_keys /home/${USER}/.ssh/authorized_keys
+RUN chown -R ${USER}:${USER} /home/${USER} \
+  && chmod 644 /home/${USER}/.ssh/authorized_keys
 
-# Dependency required by test framework
-RUN /usr/bin/perl -MCPAN -e'install Text::CSV' \
-  && /usr/bin/perl -MCPAN -e'install JSON'
-
-# install GCC-4.8
+# Install GCC-4.8 (JDK8-10)
 RUN cd /etc/yum.repos.d \
   && wget http://people.centos.org/tru/devtools-2/devtools-2.repo -O /etc/yum.repos.d/devtools-2.repo \
   && yum -y install devtoolset-2-gcc devtoolset-2-binutils \
@@ -111,99 +104,23 @@ RUN cd /etc/yum.repos.d \
   && ln -s /opt/rh/devtoolset-2/root/usr/bin/g++-4.8 /usr/bin/g++ \
   && ln -s /opt/rh/devtoolset-2/root/usr/bin/gcc-4.8 /usr/bin/cc
 
-#Building and setting up git version 2.5.3
+# Install GCC-7.3 (JDK11+)
+RUN yum -y install centos-release-scl \
+  && yum -y install devtoolset-7
+
+# Git version 2.5.3
 RUN yum -y install curl-devel expat-devel gettext-devel openssl-devel zlib-devel perl-ExtUtils-MakeMaker \
-  && cd /usr/src \
-  && wget https://www.kernel.org/pub/software/scm/git/git-2.5.3.tar.gz \
-  && tar xzf git-2.5.3.tar.gz \
+  && cd /tmp
+COPY git-2.5.3.tar.gz .
+RUN tar xzf git-2.5.3.tar.gz \
   && rm git-2.5.3.tar.gz \
-  && cd git-2.5.3 \
-  && make prefix=/usr/local/git all \
-  && make prefix=/usr/local/git install \
-  && ln -s /usr/local/git/bin/git /usr/bin/git
-
-# Install ant version 1.10.5.
-RUN wget http://www.us.apache.org/dist/ant/binaries/apache-ant-1.10.5-bin.tar.gz \
-  && tar xvfz apache-ant-1.10.5-bin.tar.gz -C /opt \
-  && rm apache-ant-1.10.5-bin.tar.gz \
-  && ln -s /opt/apache-ant-1.10.5 /opt/ant \
-  && ln -s /opt/ant/bin/ant /usr/bin/ant \
-  && cd /opt/ant/lib \
-  && wget https://sourceforge.net/projects/ant-contrib/files/ant-contrib/1.0b3/ant-contrib-1.0b3-bin.tar.gz \
-  && tar xfvz ant-contrib-1.0b3-bin.tar.gz -C .\
-  && rm ant-contrib-1.0b3-bin.tar.gz \
-  && cd ant-contrib \
-  && mv ant-contrib-1.0b3.jar .. \
-  && cd .. \
-  && rm -rf ant-contrib
-
-# Install Cuda version 7.5.18
-RUN cd /usr/src/ \
-  && wget http://developer.download.nvidia.com/compute/cuda/7.5/Prod/local_installers/cuda_7.5.18_linux.run \
-  && chmod +x cuda_7.5.18_linux.run \
-  && /usr/src/cuda_7.5.18_linux.run --silent --toolkit --override
-
-# add user home/jenkins
-RUN useradd -ms /bin/bash ${USER} \
-  && mkdir /home/${USER}/.ssh/
-COPY authorized_keys /home/${USER}/.ssh/authorized_keys
-RUN chown -R ${USER}:${USER} /home/${USER} \
-  && chmod 644 /home/${USER}/.ssh/authorized_keys
-
-# set up sshd config
-RUN mkdir /var/run/sshd \
-  && sed -i 's/#PermitRootLogin/PermitRootLogin/' /etc/ssh/sshd_config \
-  && sed -i 's/#RSAAuthentication.*/RSAAuthentication yes/' /etc/ssh/sshd_config \
-  && sed -i 's/#PubkeyAuthentication.*/PubkeyAuthentication yes/' /etc/ssh/sshd_config
-
-# SSH login fix. Otherwise user is kicked off after login
-RUN sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
-
-# Setup boot JDK for building Java 8
-RUN ln -s java-1.7.0 /usr/lib/jvm/java-7-openjdk-amd64
-
-# Setup boot JDK for building Java 9
-RUN mkdir /usr/lib/jvm/adoptojdk-java-80 \
-  && cd /usr/lib/jvm/adoptojdk-java-80 \
-  && wget -O bootjdk8.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk8?openjdk_impl=openj9&os=linux&arch=x64&release=latest&type=jdk" \
-  && tar -xzf bootjdk8.tar.gz \
-  && rm -f bootjdk8.tar.gz \
-  && mv $(ls | grep -i jdk) bootjdk8 \
-  && mv bootjdk8/* /usr/lib/jvm/adoptojdk-java-80
-
-# Setup boot JDK for building Java 10
-RUN mkdir /usr/lib/jvm/adoptojdk-java-90 \
-  && cd /usr/lib/jvm/adoptojdk-java-90 \
-  && wget -O bootjdk9.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk9?openjdk_impl=openj9&os=linux&arch=x64&release=latest&type=jdk" \
-  && tar -xzf bootjdk9.tar.gz \
-  && rm -f bootjdk9.tar.gz \
-  && mv $(ls | grep -i jdk) bootjdk9 \
-  && mv bootjdk9/* /usr/lib/jvm/adoptojdk-java-90
-
-# Setup boot JDK for building Java 11
-RUN mkdir /usr/lib/jvm/adoptojdk-java-10 \
-  && cd /usr/lib/jvm/adoptojdk-java-10 \
-  && wget -O bootjdk10.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk10?openjdk_impl=openj9&os=linux&arch=x64&release=latest&type=jdk" \
-  && tar -xzf bootjdk10.tar.gz \
-  && rm -f bootjdk10.tar.gz \
-  && mv $(ls | grep -i jdk) bootjdk10 \
-  && mv bootjdk10/* /usr/lib/jvm/adoptojdk-java-10
-
-# Install Freemaker for building OpenJ9. Used in bash ./configure --with-freemarker-jar=<path-to-freemaker-jar>
-RUN cd /home/${USER} \
-  && wget https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download -O freemarker.tgz \
-  && tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip=2 \
-  && rm -f freemarker.tgz
-
-# Install Curl version 7.24.0.
-RUN cd /usr/src \
-  && wget http://curl.haxx.se/download/curl-7.24.0.tar.bz2 \
-  && tar xfj curl-7.24.0.tar.bz2 \
-  && rm -f curl-7.24.0.tar.bz2 \
-  && cd curl-7.24.0 \
-  && ./configure --prefix=/usr \
+  && mv $(ls | grep -i git) git \
+  && cd git \
+  && ./configure prefix=/usr/local --without-tcltk \
   && make \
-  && make install 
+  && make install \
+  && cd /tmp \
+  && rm -rf git
 
 # Setup a reference repository cache for faster clones in the container
 RUN mkdir /home/${USER}/openjdk_cache \
@@ -217,6 +134,139 @@ RUN mkdir /home/${USER}/openjdk_cache \
   && git remote add openj9 https://github.com/eclipse/openj9.git \
   && git remote add omr https://github.com/eclipse/openj9-omr.git \
   && git fetch --all
+
+# Install Freemarker
+RUN cd /home/${USER}
+COPY freemarker.tgz .
+RUN tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip=2 \
+  && rm -f freemarker.tgz
+
+# Install Cuda version 7.5.18
+RUN cd /tmp
+COPY cuda_7.5.18_linux.run .
+RUN chmod +x cuda_7.5.18_linux.run \
+  && ./cuda_7.5.18_linux.run --silent --toolkit --override
+
+# Install autoconf version 2.69 (JDK11+)
+RUN cd /usr/src/
+COPY autoconf-2.69.tar.gz .
+RUN tar -xzf autoconf-2.69.tar.gz \
+  && rm -f autoconf-2.69.tar.gz \
+  && cd autoconf-2.69 \
+  && ./configure \
+  && make \
+  && make install
+
+# OpenSSL (JDK11+)
+RUN cd /tmp \
+  && wget -O openssl.tar.gz https://www.openssl.org/source/old/1.1.0/openssl-1.1.0g.tar.gz \
+  && tar xf openssl.tar.gz \
+  && rm -f openssl.tar.gz \
+  && mv $(ls | grep -i openssl) openssl \
+  && cd openssl \
+  && ./config \
+  && make \
+  && make install \
+  && cd /tmp \
+  && rm -rf openssl \
+  && ln -s /usr/local/lib64/libssl.so.1.1 /usr/lib64/libssl.so.1.1 \
+  && ln -s /usr/local/lib64/libcrypto.so.1.1 /usr/lib64/libcrypto.so.1.1
+
+# Protobuf (JDK11+)
+RUN cd /tmp \
+  && wget -O protobuf.tar.gz https://github.com/protocolbuffers/protobuf/releases/download/v3.5.1/protobuf-cpp-3.5.1.tar.gz \
+  && tar xf protobuf.tar.gz \
+  && rm -f protobuf.tar.gz \
+  && mv $(ls | grep -i protobuf) protobuf \
+  && cd protobuf \
+  && ./configure \
+  && make \
+  && make install \
+  && ldconfig \
+  && cd /tmp \
+  && rm -rf protobuf
+
+# BootJDKs
+
+# Setup boot JDK for building Java 8
+RUN ln -s java-1.7.0 /usr/lib/jvm/java-7-openjdk-amd64
+
+# Setup boot JDK for building Java 9
+RUN mkdir /usr/lib/jvm/adoptojdk-java-80
+COPY bootjdk8.tar.gz /usr/lib/jvm/adoptojdk-java-80/
+RUN cd /usr/lib/jvm/adoptojdk-java-80 \
+  && tar -xzf bootjdk8.tar.gz \
+  && rm -f bootjdk8.tar.gz \
+  && mv $(ls | grep -i jdk) bootjdk8 \
+  && mv bootjdk8/* /usr/lib/jvm/adoptojdk-java-80
+
+# Setup boot JDK for building Java 10
+RUN mkdir /usr/lib/jvm/adoptojdk-java-90 \
+  && cd /usr/lib/jvm/adoptojdk-java-90
+COPY bootjdk9.tar.gz .
+RUN tar -xzf bootjdk9.tar.gz \
+  && rm -f bootjdk9.tar.gz \
+  && mv $(ls | grep -i jdk) bootjdk9 \
+  && mv bootjdk9/* /usr/lib/jvm/adoptojdk-java-90
+
+# Setup boot JDK for building Java 11
+RUN mkdir /usr/lib/jvm/adoptojdk-java-10 \
+  && cd /usr/lib/jvm/adoptojdk-java-10
+COPY bootjdk10.tar.gz .
+RUN tar -xzf bootjdk10.tar.gz \
+  && rm -f bootjdk10.tar.gz \
+  && mv $(ls | grep -i jdk) bootjdk10 \
+  && mv bootjdk10/* /usr/lib/jvm/adoptojdk-java-10
+
+#######################
+# TEST DEPENDENCIES
+#######################
+
+# Install Ant 1.10.5 & Ant-Contrib 1.0b3.
+RUN cd /tmp
+COPY apache-ant-1.10.5-bin.tar.gz .
+RUN tar xvfz apache-ant-1.10.5-bin.tar.gz -C /opt \
+  && rm apache-ant-1.10.5-bin.tar.gz \
+  && ln -s /opt/apache-ant-1.10.5 /opt/ant \
+  && ln -s /opt/ant/bin/ant /usr/bin/ant \
+  && cd /opt/ant/lib
+COPY ant-contrib-1.0b3-bin.tar.gz .
+RUN tar xfvz ant-contrib-1.0b3-bin.tar.gz -C .\
+  && rm ant-contrib-1.0b3-bin.tar.gz \
+  && cd ant-contrib \
+  && mv ant-contrib-1.0b3.jar .. \
+  && cd .. \
+  && rm -rf ant-contrib
+
+# Perl Packages
+RUN /usr/bin/perl -MCPAN -e'install Text::CSV' \
+  && /usr/bin/perl -MCPAN -e'install JSON'
+
+# Install Curl version 7.24.0.
+RUN cd /usr/src
+COPY curl-7.24.0.tar.bz2 curl.tar.gz
+RUN tar xfj curl.tar.bz2 \
+  && rm -f curl.tar.bz2 \
+  && mv $(ls | grep -i curl) curl \
+  && cd curl \
+  && ./configure --prefix=/usr \
+  && make \
+  && make install \
+  && cd /tmp \
+  && rm -rf curl
+
+#######################
+# JENKINS DEPENDENCIES
+#######################
+
+# set up sshd config
+RUN mkdir /var/run/sshd \
+  && sed -i 's/#PermitRootLogin/PermitRootLogin/' /etc/ssh/sshd_config \
+  && sed -i 's/#RSAAuthentication.*/RSAAuthentication yes/' /etc/ssh/sshd_config \
+  && sed -i 's/#PubkeyAuthentication.*/PubkeyAuthentication yes/' /etc/ssh/sshd_config
+
+# SSH login fix. Otherwise user is kicked off after login
+RUN sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
 
 # Expose SSH port and run SSHD
 EXPOSE 22
