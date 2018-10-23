@@ -151,8 +151,8 @@ def set_build_status(REPO, CONTEXT, SHA, URL, STATE, MESSAGE) {
     ]);
 }
 
-def cancel_running_pr_test_builds(JOB_NAME, PULL_ID) {
-    echo "Looking to stop running jobs:'${JOB_NAME}' from PR:'${PULL_ID}'"
+def cancel_running_pr_test_builds(JOB_NAME, BUILD_IDENTIFIER) {
+    echo "Looking to stop running jobs:'${JOB_NAME}' from build:'${BUILD_IDENTIFIER}'"
     def build = Jenkins.instance.getAllItems(Job.class).findAll {
         // Class hudson.model.FreeStyleProject
         // or Class org.jenkinsci.plugins.workflow.job.WorkflowJob (pipelines)
@@ -167,14 +167,14 @@ def cancel_running_pr_test_builds(JOB_NAME, PULL_ID) {
         if (!run.isBuilding()) { return }
         // Only look for jobs matching the PR ID
         // Since we pass OPENJ9_SHA to Test jobs with PR_ID, we can sniff this parameter
-        if (run.getEnvironment().get('OPENJ9_SHA') != "origin/pr/${params.ghprbPullId}/merge") { return }
+        if (run.getEnvironment().get('BUILD_IDENTIFIER') != "${BUILD_IDENTIFIER}") { return }
         echo "Cancelling Job:'${run}'"
         run.doStop()
     }
     echo "Done stopping jobs"
 }
 
-def build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, OMR_REPO, OMR_BRANCH, OMR_SHA, VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, VENDOR_CREDENTIALS_ID, NODE, ghprbPullId, ghprbGhRepository, ghprbCommentBody, ghprbTargetBranch, ghprbActualCommit) {
+def build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, OMR_REPO, OMR_BRANCH, OMR_SHA, VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, VENDOR_CREDENTIALS_ID, NODE, ghprbPullId, ghprbGhRepository, ghprbCommentBody, ghprbTargetBranch, ghprbActualCommit, BUILD_IDENTIFIER) {
     stage ("${BUILD_JOB_NAME}") {
         return build_with_slack(BUILD_JOB_NAME, ghprbGhRepository, ghprbActualCommit,
             [string(name: 'OPENJDK_REPO', value: OPENJDK_REPO),
@@ -191,6 +191,7 @@ def build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA, OPENJ9_REPO
             string(name: 'VENDOR_BRANCH', value: VENDOR_BRANCH),
             string(name: 'VENDOR_CREDENTIALS_ID', value: VENDOR_CREDENTIALS_ID),
             string(name: 'NODE', value: NODE),
+            string(name: 'BUILD_IDENTIFIER', value: BUILD_IDENTIFIER),
             string(name: 'ghprbPullId', value: ghprbPullId),
             string(name: 'ghprbGhRepository', value: ghprbGhRepository),
             string(name: 'ghprbCommentBody', value: ghprbCommentBody),
@@ -198,7 +199,7 @@ def build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA, OPENJ9_REPO
     }
 }
 
-def build_with_one_upstream(JOB_NAME, UPSTREAM_JOB_NAME, UPSTREAM_JOB_NUMBER, VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, VENDOR_CREDENTIALS_ID, NODE, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, BUILD_LIST, TEST_FLAG, ghprbGhRepository, ghprbActualCommit) {
+def build_with_one_upstream(JOB_NAME, UPSTREAM_JOB_NAME, UPSTREAM_JOB_NUMBER, VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, VENDOR_CREDENTIALS_ID, NODE, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, BUILD_LIST, TEST_FLAG, ghprbGhRepository, ghprbActualCommit, BUILD_IDENTIFIER) {
     stage ("${JOB_NAME}") {
         return build_with_slack(JOB_NAME, ghprbGhRepository, ghprbActualCommit,
             [string(name: 'UPSTREAM_JOB_NAME', value: UPSTREAM_JOB_NAME),
@@ -217,12 +218,13 @@ def build_with_one_upstream(JOB_NAME, UPSTREAM_JOB_NAME, UPSTREAM_JOB_NUMBER, VA
             string(name: 'VENDOR_TEST_DIRS', value: VENDOR_TEST_DIRS),
             string(name: 'USER_CREDENTIALS_ID', value: USER_CREDENTIALS_ID),
             string(name: 'BUILD_LIST', value: BUILD_LIST),
-            string(name: 'TEST_FLAG', value: TEST_FLAG)])
+            string(name: 'TEST_FLAG', value: TEST_FLAG),
+            string(name: 'BUILD_IDENTIFIER', value: BUILD_IDENTIFIER)])
 
     }
 }
 
-def build_with_artifactory(JOB_NAME, VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, VENDOR_CREDENTIALS_ID, NODE, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, BUILD_LIST, CUSTOMIZED_SDK_URL, ARTIFACTORY_SERVER, ARTIFACTORY_CREDS, TEST_FLAG, ghprbGhRepository, ghprbActualCommit) {
+def build_with_artifactory(JOB_NAME, VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, VENDOR_CREDENTIALS_ID, NODE, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, BUILD_LIST, CUSTOMIZED_SDK_URL, ARTIFACTORY_SERVER, ARTIFACTORY_CREDS, TEST_FLAG, ghprbGhRepository, ghprbActualCommit, BUILD_IDENTIFIER) {
     stage ("${JOB_NAME}") {
         return build_with_slack(JOB_NAME, ghprbGhRepository, ghprbActualCommit,
             [string(name: 'VARIABLE_FILE', value: VARIABLE_FILE),
@@ -242,7 +244,8 @@ def build_with_artifactory(JOB_NAME, VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, 
             string(name: 'CUSTOMIZED_SDK_URL', value: CUSTOMIZED_SDK_URL),
             string(name: 'ARTIFACTORY_SERVER', value: ARTIFACTORY_SERVER),
             string(name: 'CUSTOMIZED_SDK_URL_CREDENTIAL_ID', value: ARTIFACTORY_CREDS),
-            string(name: 'TEST_FLAG', value: TEST_FLAG)])
+            string(name: 'TEST_FLAG', value: TEST_FLAG),
+            string(name: 'BUILD_IDENTIFIER', value: BUILD_IDENTIFIER)])
     }
 }
 
@@ -330,7 +333,7 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
 
     // compile the source and build the SDK
     def BUILD_JOB_NAME = "Adam_Build-JDK${SDK_VERSION}-${SPEC}"
-    jobs["build"] = build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, SHAS['OPENJDK'], OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], OMR_REPO, OMR_BRANCH, SHAS['OMR'], params.VARIABLE_FILE, params.VENDOR_REPO, params.VENDOR_BRANCH, params.VENDOR_CREDENTIALS_ID, params.BUILD_NODE, params.ghprbPullId, params.ghprbGhRepository, params.ghprbCommentBody, params.ghprbTargetBranch, params.ghprbActualCommit)
+    jobs["build"] = build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, SHAS['OPENJDK'], OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], OMR_REPO, OMR_BRANCH, SHAS['OMR'], params.VARIABLE_FILE, params.VENDOR_REPO, params.VENDOR_BRANCH, params.VENDOR_CREDENTIALS_ID, params.BUILD_NODE, params.ghprbPullId, params.ghprbGhRepository, params.ghprbCommentBody, params.ghprbTargetBranch, params.ghprbActualCommit, BUILD_IDENTIFIER)
     echo "JOB: ${BUILD_JOB_NAME} PASSED in: ${jobs['build'].getDurationString()}"
 
     if (TESTS_TARGETS.trim() != "none") {
@@ -395,12 +398,12 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
             def TEST_JOB_NAME = "Test-${name}-JDK${SDK_VERSION}-${SPEC}"
             testjobs["${TEST_JOB_NAME}"] = {
                 if (params.ghprbPullId) {
-                    cancel_running_pr_test_builds(TEST_JOB_NAME, ghprbPullId)
+                    cancel_running_pr_test_builds(TEST_JOB_NAME, BUILD_IDENTIFIER)
                 }
                 if (ARTIFACTORY_CREDS) {
-                    jobs["${TEST_JOB_NAME}"] = build_with_artifactory(TEST_JOB_NAME, params.VARIABLE_FILE, params.VENDOR_REPO, params.VENDOR_BRANCH, params.VENDOR_CREDENTIALS_ID, params.TEST_NODE, OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, BUILD_LIST, CUSTOMIZED_SDK_URL, ARTIFACTORY_SERVER, ARTIFACTORY_CREDS, TEST_FLAG, params.ghprbGhRepository, params.ghprbActualCommit)
+                    jobs["${TEST_JOB_NAME}"] = build_with_artifactory(TEST_JOB_NAME, params.VARIABLE_FILE, params.VENDOR_REPO, params.VENDOR_BRANCH, params.VENDOR_CREDENTIALS_ID, params.TEST_NODE, OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, BUILD_LIST, CUSTOMIZED_SDK_URL, ARTIFACTORY_SERVER, ARTIFACTORY_CREDS, TEST_FLAG, params.ghprbGhRepository, params.ghprbActualCommit, BUILD_IDENTIFIER)
                 } else {
-                    jobs["${TEST_JOB_NAME}"] = build_with_one_upstream(TEST_JOB_NAME, BUILD_JOB_NAME, jobs["build"].getNumber(), params.VARIABLE_FILE, params.VENDOR_REPO, params.VENDOR_BRANCH, params.VENDOR_CREDENTIALS_ID, params.TEST_NODE, OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, BUILD_LIST, TEST_FLAG, params.ghprbGhRepository, params.ghprbActualCommit)
+                    jobs["${TEST_JOB_NAME}"] = build_with_one_upstream(TEST_JOB_NAME, BUILD_JOB_NAME, jobs["build"].getNumber(), params.VARIABLE_FILE, params.VENDOR_REPO, params.VENDOR_BRANCH, params.VENDOR_CREDENTIALS_ID, params.TEST_NODE, OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, BUILD_LIST, TEST_FLAG, params.ghprbGhRepository, params.ghprbActualCommit, BUILD_IDENTIFIER)
                 }
                 echo "JOB: ${TEST_JOB_NAME} PASSED in: ${jobs[TEST_JOB_NAME].getDurationString()}"
             }

@@ -562,6 +562,7 @@ def set_job_properties(JOB_TYPE) {
                 'OMR_REPO':'',
                 'OMR_BRANCH':'',
                 'OMR_SHA':'',
+                'BUILD_IDENTIFIER':'',
                 'VARIABLE_FILE':"${VARIABLE_FILE_DEFAULT}",
                 'VENDOR_REPO':"${VENDOR_REPO_DEFAULT}",
                 'VENDOR_BRANCH':"${VENDOR_BRANCH_DEFAULT}",
@@ -626,6 +627,21 @@ def add_pr_to_description() {
     }
 }
 
+def set_build_identifyer() {
+    BUILD_IDENTIFIER = params.BUILD_IDENTIFIER
+    if (!BUILD_IDENTIFIER) {
+        if (params.ghprbPullId && params.ghprbGhRepository) {
+            BUILD_IDENTIFIER = params.ghprbGhRepository + '#' + params.ghprbPullId
+        }
+    }
+    if (BUILD_IDENTIFIER) {
+        def TMP_DESC = (currentBuild.description) ? currentBuild.description + "<br>" : ""
+        currentBuild.description = TMP_DESC + BUILD_IDENTIFIER
+    } else {
+        BUILD_IDENTIFIER = ''
+    }
+}
+
 /*
 * Initializes all of the required variables for a Jenkins job by given job type.
 */
@@ -639,6 +655,8 @@ def set_job_variables(job_type) {
 
     // Setup Jenkins Job Parameters
     set_job_properties(job_type)
+
+    set_build_identifyer()
 
     // check mandatory parameters if any
     try {

@@ -123,6 +123,8 @@ PROMOTE_OMR = (params.PROMOTE_OMR) ? params.PROMOTE_OMR : ""
 echo "PROMOTE_OMR:'${PROMOTE_OMR}'"
 SLACK_HANDLE = (params.SLACK_HANDLE) ? params.SLACK_HANDLE : ""
 echo "SLACK_HANDLE:'${SLACK_HANDLE}'"
+BUILD_IDENTIFIER = (params.BUILD_IDENTIFIER) ? params.BUILD_IDENTIFIER : ""
+echo "BUILD_IDENTIFIER:'${BUILD_IDENTIFIER}'"
 
 // Pull Request Builds
 ghprbPullId = (params.ghprbPullId) ? params.ghprbPullId : ""
@@ -332,6 +334,7 @@ def build(OPENJDK_REPO, OPENJDK_BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_RE
                     string(name: 'TEST_NODE', value: TEST_NODE),
                     string(name: 'PERSONAL_BUILD', value: PERSONAL_BUILD),
                     string(name: 'SLACK_CHANNEL', value: SLACK_HANDLE),
+                    string(name: 'BUILD_IDENTIFIER', value: BUILD_IDENTIFIER),
                     string(name: 'ghprbPullId', value: ghprbPullId),
                     string(name: 'ghprbGhRepository', value: ghprbGhRepository),
                     string(name: 'ghprbCommentBody', value: ghprbCommentBody),
