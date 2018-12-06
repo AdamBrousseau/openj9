@@ -266,7 +266,18 @@ def build_with_slack(DOWNSTREAM_JOB_NAME, ghprbGhRepository, ghprbActualCommit, 
         }
     }
 
-    def JOB = build job: DOWNSTREAM_JOB_NAME, parameters: PARAMETERS, propagate: false
+    try {
+        JOB = build job: DOWNSTREAM_JOB_NAME, parameters: PARAMETERS, propagate: false
+    } catch(e) {
+        println e
+        println e.class
+        if (ghprbActualCommit) {
+            node('master') {
+                set_build_status(GITHUB_REPO, DOWNSTREAM_JOB_NAME, ghprbActualCommit, BUILD_URL, 'ERROR', "Build Cancelled")
+            }
+        }
+        throw e
+    }
     def DOWNSTREAM_JOB_NUMBER = JOB.getNumber()
     def DOWNSTREAM_JOB_URL = JOB.getAbsoluteUrl()
     def DOWNSTREAM_JOB_TIME = JOB.getDurationString()
