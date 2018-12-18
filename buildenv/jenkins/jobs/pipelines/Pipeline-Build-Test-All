@@ -171,7 +171,7 @@ timeout(time: 12, unit: 'HOURS') {
                     * 3+ - jdk versions
                     */
                     def PARSED_COMMENT = params.ghprbCommentBody.toLowerCase().tokenize(' ')
-                    if (PARSED_COMMENT[0] != 'adam') {
+                    if (PARSED_COMMENT[0] != 'jenkins') {
                         error("Pull Request trigger comment needs to begin with 'Jenkins'")
                     }
 
