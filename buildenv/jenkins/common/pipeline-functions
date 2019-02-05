@@ -247,6 +247,30 @@ def build_with_artifactory(JOB_NAME, VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, 
     }
 }
 
+def build_with_scp(JOB_NAME, NODE, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, BUILD_LIST, CUSTOM_SCP_PATH, SDK_FILENAME, TEST_FILENAME, TEST_FLAG, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH) {
+    stage ("${JOB_NAME}") {
+        return build_with_slack(JOB_NAME, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER,
+            [string(name: 'LABEL', value: NODE),
+            string(name: 'ADOPTOPENJDK_REPO', value: ADOPTOPENJDK_REPO),
+            string(name: 'ADOPTOPENJDK_BRANCH', value: ADOPTOPENJDK_BRANCH),
+            string(name: 'OPENJ9_REPO', value: OPENJ9_REPO),
+            string(name: 'OPENJ9_BRANCH', value: OPENJ9_BRANCH),
+            string(name: 'OPENJ9_SHA', value: OPENJ9_SHA),
+            string(name: 'VENDOR_TEST_REPOS', value: VENDOR_TEST_REPOS),
+            string(name: 'VENDOR_TEST_BRANCHES', value: VENDOR_TEST_BRANCHES),
+            string(name: 'VENDOR_TEST_SHAS', value: VENDOR_TEST_SHAS),
+            string(name: 'VENDOR_TEST_DIRS', value: VENDOR_TEST_DIRS),
+            string(name: 'USER_CREDENTIALS_ID', value: USER_CREDENTIALS_ID),
+            string(name: 'BUILD_LIST', value: BUILD_LIST),
+            string(name: 'CUSTOM_SCP_PATH', value: CUSTOM_SCP_PATH),
+            string(name: 'SDK_FILENAME', value: SDK_FILENAME),
+            string(name: 'TEST_FILENAME', value: TEST_FILENAME),
+            string(name: 'TEST_FLAG', value: TEST_FLAG),
+            string(name: 'KEEP_REPORTDIR', value: 'false'),
+            string(name: 'BUILD_IDENTIFIER', value: BUILD_IDENTIFIER)])
+    }
+}
+
 def get_causes(job) {
     def cause_string = ''
     for (cause in job.rawBuild.getCauses()) {
@@ -370,6 +394,7 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
         // Determine if Build job archived to Artifactory
         def BUILD_JOB_ENV = jobs["build"].getBuildVariables()
         ARTIFACTORY_CREDS = ''
+        CUSTOM_SCP_PATH = ''
         echo "BUILD_JOB_ENV:'${BUILD_JOB_ENV}'"
         if (BUILD_JOB_ENV['CUSTOMIZED_SDK_URL']) {
             CUSTOMIZED_SDK_URL = BUILD_JOB_ENV['CUSTOMIZED_SDK_URL']
@@ -378,6 +403,10 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
             echo "Passing CUSTOMIZED_SDK_URL:'${CUSTOMIZED_SDK_URL}'"
             echo "Using ARTIFACTORY_CREDS:'${ARTIFACTORY_CREDS}'"
             echo "Using ARTIFACTORY_SERVER:'${ARTIFACTORY_SERVER}'"
+        } else if (BUILD_JOB_ENV['CUSTOM_SCP_PATH']) {
+            CUSTOM_SCP_PATH = BUILD_JOB_ENV['CUSTOM_SCP_PATH']
+            SDK_FILENAME = BUILD_JOB_ENV['SDK_FILENAME']
+            TEST_FILENAME = BUILD_JOB_ENV['TEST_FILENAME']
         }
         for (name in TARGET_NAMES) {
             def TEST_FLAG
@@ -389,6 +418,8 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
             testjobs["${TEST_JOB_NAME}"] = {
                 if (ARTIFACTORY_CREDS) {
                     jobs["${TEST_JOB_NAME}"] = build_with_artifactory(TEST_JOB_NAME, VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, VENDOR_CREDENTIALS_ID, TEST_NODE, OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, BUILD_LIST, CUSTOMIZED_SDK_URL, ARTIFACTORY_SERVER, ARTIFACTORY_CREDS, TEST_FLAG, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH)
+                } else if(CUSTOM_SCP_PATH) {
+                    jobs["${TEST_JOB_NAME}"] = build_with_scp(TEST_JOB_NAME, TEST_NODE, OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, BUILD_LIST, CUSTOM_SCP_PATH, SDK_FILENAME, TEST_FILENAME, TEST_FLAG, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH)
                 } else {
                     jobs["${TEST_JOB_NAME}"] = build_with_one_upstream(TEST_JOB_NAME, BUILD_JOB_NAME, jobs["build"].getNumber(), VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, VENDOR_CREDENTIALS_ID, TEST_NODE, OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, BUILD_LIST, TEST_FLAG, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH)
                 }

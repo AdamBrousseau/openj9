@@ -145,7 +145,7 @@ def set_repos_variables(BUILD_SPECS=null) {
 * Initializes OpenJDK repository URL, branch, SHA for given release and returns
 * them as a map.
 * Build parameters take precedence over custom variables (see variables file).
-* Throws an error if repository URL or branch are not provided. 
+* Throws an error if repository URL or branch are not provided.
 */
 def get_openjdk_info(SDK_VERSION, SPECS, MULTI_RELEASE) {
     // map to store git repository information by spec
@@ -208,9 +208,9 @@ def get_openjdk_info(SDK_VERSION, SPECS, MULTI_RELEASE) {
 
 /*
 * Initializes the OpenJ9 and OMR repositories variables with values from
-* the variables file if they are not set as build parameters. 
+* the variables file if they are not set as build parameters.
 * If no values available in the variable file then initialize these variables
-* with default values, otherwise set them to empty strings (to avoid 
+* with default values, otherwise set them to empty strings (to avoid
 * downstream builds errors - Jenkins build parameters should not be null).
 */
 def set_extensions_variables(defaults=null) {
@@ -337,8 +337,8 @@ def get_user_credentials_id(KEY) {
 * to run a Jenkins job.
 * Fetches the labels from the variables file when the node is not set as build
 * parameter.
-* The node's labels could be a single label - e.g. label1 - or a boolean 
-* expression - e.g. label1 && label2 || label3. 
+* The node's labels could be a single label - e.g. label1 - or a boolean
+* expression - e.g. label1 && label2 || label3.
 */
 def set_node(job_type) {
     // fetch labels for given platform/spec
@@ -426,8 +426,8 @@ def set_build_variables() {
 
 def set_sdk_variables() {
     DATESTAMP = get_date()
-    SDK_FILENAME = "OpenJ9-JDK${SDK_VERSION}-${SPEC}-${DATESTAMP}.tar.gz"
-    TEST_FILENAME = "native-test-libs.tar.gz"
+    env.SDK_FILENAME = "OpenJ9-JDK${SDK_VERSION}-${SPEC}-${DATESTAMP}.tar.gz"
+    env.TEST_FILENAME = "native-test-libs.tar.gz"
     echo "Using SDK_FILENAME = ${SDK_FILENAME}"
     echo "Using TEST_FILENAME = ${TEST_FILENAME}"
 }
@@ -447,7 +447,7 @@ def get_date() {
 def set_test_variables() {
     set_release()
     set_jdk_folder()
-    
+
     if ( SPEC ==~ /.*valhalla.*/) {
         JAVA_VERSION = "Valhalla"
     } else {
@@ -457,7 +457,7 @@ def set_test_variables() {
 }
 
 /*
-* Set TESTS_TARGETS, indicating the level of testing. 
+* Set TESTS_TARGETS, indicating the level of testing.
 */
 def set_test_targets() {
     TESTS_TARGETS = params.TESTS_TARGETS
@@ -947,7 +947,7 @@ def get_repo_name_from_url(URL) {
 */
 def get_build_releases(releases_by_specs) {
     def build_releases = []
-    
+
     // find releases to build based on given specs
     releases_by_specs.values().each { versions ->
         build_releases.addAll(versions)
