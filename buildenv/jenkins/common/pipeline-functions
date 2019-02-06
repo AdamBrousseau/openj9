@@ -265,6 +265,7 @@ def build_with_scp(JOB_NAME, NODE, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, VENDO
             string(name: 'CUSTOM_SCP_PATH', value: CUSTOM_SCP_PATH),
             string(name: 'SDK_FILENAME', value: SDK_FILENAME),
             string(name: 'TEST_FILENAME', value: TEST_FILENAME),
+            string(name: 'CUSTOMIZED_SDK_URL_CREDENTIAL_ID', value: USER_CREDENTIALS_ID),
             string(name: 'TEST_FLAG', value: TEST_FLAG),
             string(name: 'KEEP_REPORTDIR', value: 'false'),
             string(name: 'BUILD_IDENTIFIER', value: BUILD_IDENTIFIER)])
