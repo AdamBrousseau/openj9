@@ -62,11 +62,13 @@ pipeline {
                                     returnStdout: true
                                 ).trim()
                         }
-
+                        println current_sha
                         // if there were changes, launch an acceptance build
                         step([$class: 'CopyArtifact', optional: true, fingerprintArtifacts: true, projectName: 'Mirror-OMR-to-OpenJ9-OMR'])
                         def default_sha = [omr_sha: 'Default']
                         def previous = readProperties defaults: default_sha, file: "${ARCHIVE_FILE}"
+                        println previous
+                        println previous.omr_sha
                         if ( previous.omr_sha != current_sha ) {
                             build job: 'Pipeline-OMR-Acceptance', propagate: false, wait: false
                             writeFile file: "${ARCHIVE_FILE}", text: "omr_sha=${current_sha}"
@@ -79,7 +81,8 @@ pipeline {
     }
     post {
         failure {
-            slackSend channel: '#jenkins', color: 'danger', message: "Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
+            //slackSend channel: '#jenkins', color: 'danger', message: "Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
+            echo 'failed'
         }
     }
 }
