@@ -291,36 +291,37 @@ def build_with_slack(DOWNSTREAM_JOB_NAME, ghprbGhRepository, ghprbActualCommit, 
     def DOWNSTREAM_JOB_URL = JOB.getAbsoluteUrl()
     def DOWNSTREAM_JOB_TIME = JOB.getDurationString()
 
-    if (JOB.resultIsWorseOrEqualTo('UNSTABLE')) {
-        // Get build causes
-        build_causes_string = get_causes(currentBuild)
+    echo "Downstream job ${DOWNSTREAM_JOB_NAME} ${JOB.result} after ${DOWNSTREAM_JOB_TIME}. Job Number: ${DOWNSTREAM_JOB_NUMBER} Job URL: ${DOWNSTREAM_JOB_URL}"
 
+    def GITHUB_STATUS = 'SUCCESS'
+    if (JOB.resultIsWorseOrEqualTo('UNSTABLE')) {
+        GITHUB_STATUS = 'FAILURE'
+        build_causes_string = get_causes(currentBuild)
+        if (SLACK_CHANNEL) {
+            def MESSAGE = "${JOB.result}: ${DOWNSTREAM_JOB_NAME} #${DOWNSTREAM_JOB_NUMBER} (<${DOWNSTREAM_JOB_URL}|Open>)\nStarted by ${JOB_NAME} #${BUILD_NUMBER} (<${BUILD_URL}|Open>)\n${build_causes_string}"
+            def SLACK_COLOUR = 'warning'
+            if (JOB.result == 'FAILURE') {
+                MESSAGE += "\nWould you like to restart the job? (<${RUN_DISPLAY_URL}|Open>)"
+                SLACK_COLOUR = 'danger'
+            }
+            slackSend channel: SLACK_CHANNEL, color: JOB.result.color.getHtmlBaseColor(), message: MESSAGE
+        }
+    }
+    // Set Github Commit Status
+    if (ghprbActualCommit) {
+        node('master') {
+            set_build_status(GITHUB_REPO, DOWNSTREAM_JOB_NAME, ghprbActualCommit, DOWNSTREAM_JOB_URL, GITHUB_STATUS, "Build ${JOB.result}")
+        }
+    }
+
+    if (JOB.resultIsWorseOrEqualTo('UNSTABLE')) {
         if ((JOB.result == "UNSTABLE") || (JOB.result == "ABORTED")) { // Job unstable (YELLOW) or aborted (GREY)
             // If the job was ABORTED it either was killed by someone or
             // killed by cancel_running_builds(). In this case we don't
             // want to offer the restart option as it is not desired for PR builds.
             // If the job was UNSTABLE this indicates test(s) failed and we don't want to offer the restart option.
-            echo "WARNING: Downstream job ${DOWNSTREAM_JOB_NAME} is ${JOB.result} after ${DOWNSTREAM_JOB_TIME}. Job Number: ${DOWNSTREAM_JOB_NUMBER} Job URL: ${DOWNSTREAM_JOB_URL}"
             currentBuild.result = JOB.result
-            if (SLACK_CHANNEL) {
-                slackSend channel: SLACK_CHANNEL, color: 'warning', message: "${JOB.result}: ${DOWNSTREAM_JOB_NAME} #${DOWNSTREAM_JOB_NUMBER} (<${DOWNSTREAM_JOB_URL}|Open>)\nStarted by ${JOB_NAME} #${BUILD_NUMBER} (<${BUILD_URL}|Open>)\n${build_causes_string}"
-            }
-            // Set Github Commit Status
-            if (ghprbActualCommit) {
-                node('master') {
-                    set_build_status(GITHUB_REPO, DOWNSTREAM_JOB_NAME, ghprbActualCommit, DOWNSTREAM_JOB_URL, 'FAILURE', "Build ${JOB.result}")
-                }
-            }
         } else { // Job faild (RED)
-            if (SLACK_CHANNEL) {
-                slackSend channel: SLACK_CHANNEL, color: 'danger', message: "Failure: ${DOWNSTREAM_JOB_NAME} #${DOWNSTREAM_JOB_NUMBER} (<${DOWNSTREAM_JOB_URL}|Open>)\nStarted by ${JOB_NAME} #${BUILD_NUMBER} (<${BUILD_URL}|Open>)\n${build_causes_string}\nWould you like to restart the job? (<${RUN_DISPLAY_URL}|Open>)"
-            }
-            // Set Github Commit Status
-            if (ghprbActualCommit) {
-                node('master') {
-                    set_build_status(GITHUB_REPO, DOWNSTREAM_JOB_NAME, ghprbActualCommit, DOWNSTREAM_JOB_URL, 'FAILURE', "Build FAILED")
-                }
-            }
             timeout(time: RESTART_TIMEOUT.toInteger(), unit: RESTART_TIMEOUT_UNITS) {
                 input message: "Downstream job ${DOWNSTREAM_JOB_NAME} failed after ${DOWNSTREAM_JOB_TIME}. Job Number: ${DOWNSTREAM_JOB_NUMBER} Job URL: ${DOWNSTREAM_JOB_URL}\nRestart failed job '${DOWNSTREAM_JOB_NAME}'?", ok: 'Restart'
                 // If restart is aborted or is timed-out, an error is thrown
@@ -328,15 +329,6 @@ def build_with_slack(DOWNSTREAM_JOB_NAME, ghprbGhRepository, ghprbActualCommit, 
             // If restart is approved, recursively call this function until we get a pass or a restart-rejection
             return build_with_slack(DOWNSTREAM_JOB_NAME, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, PARAMETERS)
         }
-    } else {
-        echo "Downstream job ${DOWNSTREAM_JOB_NAME} PASSED after ${DOWNSTREAM_JOB_TIME}"
-        // Set Github Commit Status
-        if (ghprbActualCommit) {
-            node('master') {
-                set_build_status(GITHUB_REPO, DOWNSTREAM_JOB_NAME, ghprbActualCommit, DOWNSTREAM_JOB_URL, 'SUCCESS', "Build PASSED")
-            }
-        }
-    }
     return JOB
 }
 
