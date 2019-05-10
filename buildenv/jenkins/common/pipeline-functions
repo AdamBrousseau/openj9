@@ -293,11 +293,20 @@ def build_with_slack(DOWNSTREAM_JOB_NAME, ghprbGhRepository, ghprbActualCommit, 
 
     echo "Downstream job ${DOWNSTREAM_JOB_NAME} ${JOB.result} after ${DOWNSTREAM_JOB_TIME}. Job Number: ${DOWNSTREAM_JOB_NUMBER} Job URL: ${DOWNSTREAM_JOB_URL}"
 
+    switch(JOB.result) {
+        case: 'SUCCESS'
+            GITHUB_STATUS = 'SUCCESS'
+            break
+        default:
+            GITHUB_STATUS = 'FAILURE'
+            break
+    }
+
     def GITHUB_STATUS = 'SUCCESS'
     if (JOB.resultIsWorseOrEqualTo('UNSTABLE')) {
         GITHUB_STATUS = 'FAILURE'
-        build_causes_string = get_causes(currentBuild)
         if (SLACK_CHANNEL) {
+            def build_causes_string = get_causes(currentBuild)
             def MESSAGE = "${JOB.result}: ${DOWNSTREAM_JOB_NAME} #${DOWNSTREAM_JOB_NUMBER} (<${DOWNSTREAM_JOB_URL}|Open>)\nStarted by ${JOB_NAME} #${BUILD_NUMBER} (<${BUILD_URL}|Open>)\n${build_causes_string}"
             def SLACK_COLOUR = 'warning'
             if (JOB.result == 'FAILURE') {
