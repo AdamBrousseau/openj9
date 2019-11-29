@@ -20,6 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 *******************************************************************************/
 
+DEFAULT_SCM_REFSPEC = 'refs/heads/*:refs/remotes/origin/*'
 if (!binding.hasVariable('SDK_VERSION')) SDK_VERSION = ''
 if (!binding.hasVariable('PLATFORM')) PLATFORM = ''
 if (!binding.hasVariable('VARIABLE_FILE_DEFAULT')) VARIABLE_FILE_DEFAULT = ''
@@ -29,7 +30,7 @@ if (!binding.hasVariable('VENDOR_CREDENTIALS_ID_DEFAULT')) VENDOR_CREDENTIALS_ID
 if (!binding.hasVariable('DISCARDER_NUM_BUILDS')) DISCARDER_NUM_BUILDS = '1'
 if (!binding.hasVariable('SCM_REPO')) SCM_REPO = 'https://github.com/eclipse/openj9.git'
 if (!binding.hasVariable('SCM_BRANCH')) SCM_BRANCH = 'refs/heads/master'
-if (!binding.hasVariable('SCM_REFSPEC')) SCM_REFSPEC = 'refs/heads/*:refs/remotes/origin/*'
+if (!binding.hasVariable('SCM_REFSPEC')) SCM_REFSPEC = DEFAULT_SCM_REFSPEC
 
 if (jobType == 'build') {
     pipelineScript = 'buildenv/jenkins/jobs/pipelines/Build-Any-Platform.groovy'
@@ -39,10 +40,17 @@ if (jobType == 'build') {
     error "Unknown build type:'${jobType}'"
 }
 
+// If the refspec is default, we can do a lightweight checkout to save time/load on master
+LIGHTWEIGHT = false
+if ((SCM_REFSPEC == '') || (SCM_REFSPEC == DEFAULT_SCM_REFSPEC)) {
+    LIGHTWEIGHT = true
+}
+
 pipelineJob("$JOB_NAME") {
     description('<h3>THIS IS AN AUTOMATICALLY GENERATED JOB DO NOT MODIFY, IT WILL BE OVERWRITTEN.</h3><p>This job is defined in Pipeline_Template.groovy in the openj9 repo, if you wish to change it modify that</p>')
     definition {
         cpsScm {
+            lightweight(boolean lightweight = LIGHTWEIGHT)
             scm {
                 git {
                     remote {
