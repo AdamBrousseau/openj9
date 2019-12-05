@@ -27,9 +27,9 @@ if (!binding.hasVariable('VENDOR_REPO_DEFAULT')) VENDOR_REPO_DEFAULT = ''
 if (!binding.hasVariable('VENDOR_BRANCH_DEFAULT')) VENDOR_BRANCH_DEFAULT = ''
 if (!binding.hasVariable('VENDOR_CREDENTIALS_ID_DEFAULT')) VENDOR_CREDENTIALS_ID_DEFAULT = ''
 if (!binding.hasVariable('DISCARDER_NUM_BUILDS')) DISCARDER_NUM_BUILDS = '1'
-if (!binding.hasVariable('SCM_REPO')) SCM_REPO = 'https://github.com/eclipse/openj9.git'
-if (!binding.hasVariable('SCM_BRANCH')) SCM_BRANCH = 'refs/heads/master'
-if (!binding.hasVariable('SCM_REFSPEC')) SCM_REFSPEC = 'refs/heads/*:refs/remotes/origin/*'
+if (!binding.hasVariable('SCM_REPO')) SCM_REPO = DEFAULT_SCM_REPO
+if (!binding.hasVariable('SCM_BRANCH')) SCM_BRANCH = DEFAULT_SCM_BRANCH
+if (!binding.hasVariable('SCM_REFSPEC')) SCM_REFSPEC = DEFAULT_SCM_REFSPEC
 
 if (jobType == 'build') {
     pipelineScript = 'buildenv/jenkins/jobs/pipelines/Build-Any-Platform.groovy'
@@ -39,6 +39,17 @@ if (jobType == 'build') {
     error "Unknown build type:'${jobType}'"
 }
 
+REPO_VALUE = DEFAULT_SCM_REPO
+BRANCH_VALUE = DEFAULT_SCM_BRANCH
+REFSPEC_VALUE = DEFAULT_REFSPEC_VALUE
+LIGHTWEIGHT = true
+if (RELENG_BUILD) {
+    REPO_VALUE = '$SCM_REPO'
+    BRANCH_VALUE = '$SCM_BRANCH'
+    REFSPEC_VALUE = '$SCM_REFSPEC'
+    LIGHTWEIGHT = false
+}
+
 pipelineJob("$JOB_NAME") {
     description('<h3>THIS IS AN AUTOMATICALLY GENERATED JOB DO NOT MODIFY, IT WILL BE OVERWRITTEN.</h3><p>This job is defined in Pipeline_Template.groovy in the openj9 repo, if you wish to change it modify that</p>')
     definition {
@@ -46,10 +57,10 @@ pipelineJob("$JOB_NAME") {
             scm {
                 git {
                     remote {
-                        url('$SCM_REPO')
-                        refspec('$SCM_REFSPEC')
+                        url(SCM_VALUE)
+                        refspec(REFSPEC_VALUE)
                     }
-                    branch('$SCM_BRANCH')
+                    branch(BRANCH_VALUE)
                     extensions {
                         cloneOptions {
                             reference('$HOME/openjdk_cache')
@@ -59,6 +70,7 @@ pipelineJob("$JOB_NAME") {
                 }
             }
             scriptPath(pipelineScript)
+            lightweight(LIGHTWEIGHT)
         }
     }
     logRotator {
@@ -95,10 +107,11 @@ pipelineJob("$JOB_NAME") {
         stringParam('OPENJDK_CLONE_DIR')
         stringParam('PERSONAL_BUILD')
         stringParam('CUSTOM_DESCRIPTION')
-        stringParam('SCM_REPO', SCM_REPO)
-        stringParam('SCM_BRANCH', SCM_BRANCH)
-        stringParam('SCM_REFSPEC', SCM_REFSPEC)
+        stringParam('SCM_REPO', DEFAULT_SCM_REPO)
+        stringParam('SCM_BRANCH', DEFAULT_SCM_BRANCH)
+        stringParam('SCM_REFSPEC')
         booleanParam('ARCHIVE_JAVADOC', false)
+        booleanParam('RELENG_BUILD', RELENG_BUILD)
 
         if (jobType == 'pipeline'){
             stringParam('TESTS_TARGETS')

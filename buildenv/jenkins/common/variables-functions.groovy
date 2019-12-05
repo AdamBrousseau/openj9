@@ -1235,7 +1235,7 @@ def create_job(JOB_NAME, SDK_VERSION, SPEC, downstreamJobType, id){
 
     def templatePath = 'buildenv/jenkins/jobs/pipelines/Pipeline_Template.groovy'
     pipelineFunctions.retry_and_delay({
-        jobDsl targets: templatePath, ignoreExisting: false, additionalParameters: params}, 
+        jobDsl targets: templatePath, ignoreExisting: false, additionalParameters: params},
         3, 120)
 }
 

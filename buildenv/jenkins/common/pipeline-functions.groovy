@@ -512,6 +512,9 @@ def convert_build_identifier(val) {
         case ~/^.*-Acceptance$/:
             return val.substring(0,val.indexOf('-'))
             break
+        case "Releng":
+            return val
+            break
         default:
             return "Personal"
     }
@@ -672,7 +675,7 @@ def setup_pull_request() {
     def PARSED_BY_NEWLINE_COMMENT = params.ghprbCommentBody.split(/\\r?\\n/)
     for (COMMENT in PARSED_BY_NEWLINE_COMMENT) {
         def comment = COMMENT.toLowerCase().tokenize(' ')
-        if (("${comment[0]}" == "jenkins") && (("${comment[1]}" == "compile") || ("${comment[1]}" == "test"))) {
+        if ((("${comment[0]}" == "jenkins") || ("${comment[0]}" == "releng")) && (("${comment[1]}" == "compile") || ("${comment[1]}" == "test"))) {
             setup_pull_request_single_comment(comment)
             return
         }

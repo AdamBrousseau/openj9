@@ -173,28 +173,42 @@ echo "ghprbTargetBranch:'${ghprbTargetBranch}'"
 ghprbActualCommit = (params.ghprbActualCommit) ? params.ghprbActualCommit : ""
 echo "ghprbActualCommit:'${ghprbActualCommit}'"
 
-// If custom repo/branch/refspec is passed, use it,
-// elif build is OpenJ9 PR, use pr merge-ref/refspec,
-// else use eclipse/master/blank for defaults respectively.
-SCM_REPO = 'https://github.com/eclipse/openj9.git'
-if (params.SCM_REPO) {
-    SCM_REPO = params.SCM_REPO
-}
-echo "SCM_REPO:'${SCM_REPO}'"
-SCM_BRANCH = 'refs/heads/master'
-if (params.SCM_BRANCH) {
-    SCM_BRANCH = params.SCM_BRANCH
-} else if (ghprbPullId && ghprbGhRepository == 'eclipse/openj9') {
-    SCM_BRANCH = sha1
-}
-echo "SCM_BRANCH:'${SCM_BRANCH}'"
+/*
+ * If BUILD_IDENTIFIER is 'Releng', allow for user passed pipelines.
+ * This requires a non "lightweight checkout" in the job configs
+ * If custom repo/branch/refspec is passed, use it,
+ * elif build is OpenJ9 RELENG PR, use pr merge-ref/refspec,
+ * else use eclipse/master/blank for defaults respectively.
+ */
+DEFAULT_SCM_REPO = 'https://github.com/eclipse/openj9.git'
+DEFAULT_SCM_BRANCH = 'refs/heads/master'
+DEFAULT_SCM_REFSPEC = ''
+SCM_REPO = ''
+SCM_BRANCH = ''
 SCM_REFSPEC = ''
-if (params.SCM_REFSPEC) {
-    SCM_REFSPEC = params.SCM_REFSPEC
-} else if (ghprbPullId && ghprbGhRepository == 'eclipse/openj9') {
-    SCM_REFSPEC = "+refs/pull/${ghprbPullId}/merge:refs/remotes/origin/pr/${ghprbPullId}/merge"
+RELENG_BUILD = false
+if (BUILD_IDENTIFIER == 'Releng') {
+    RELENG_BUILD = true
+    echo "RELENG_BUILD slected, allow user defined pipelines."
+    SCM_REPO = DEFAULT_SCM_REPO
+    if (params.SCM_REPO) {
+        SCM_REPO = params.SCM_REPO
+    }
+    echo "SCM_REPO:'${SCM_REPO}'"
+    SCM_BRANCH = DEFAULT_SCM_BRANCH
+    if (params.SCM_BRANCH) {
+        SCM_BRANCH = params.SCM_BRANCH
+    } else if (ghprbPullId && ghprbGhRepository == 'eclipse/openj9') {
+        SCM_BRANCH = sha1
+    }
+    echo "SCM_BRANCH:'${SCM_BRANCH}'"
+    if (params.SCM_REFSPEC) {
+        SCM_REFSPEC = params.SCM_REFSPEC
+    } else if (ghprbPullId && ghprbGhRepository == 'eclipse/openj9') {
+        SCM_REFSPEC = "+refs/pull/${ghprbPullId}/merge:refs/remotes/origin/pr/${ghprbPullId}/merge"
+    }
+    echo "SCM_REFSPEC:'${SCM_REFSPEC}'"
 }
-echo "SCM_REFSPEC:'${SCM_REFSPEC}'"
 
 RELEASES = []
 
@@ -457,7 +471,10 @@ def get_value_by_spec(map, release, spec) {
 }
 
 def get_pipeline_name(spec, version) {
-    return "Pipeline_Build_Test_JDK${version}_${spec}"
+    // Pipeline level jobs are reused between all BUILD_IDENTIFIERs except Releng.
+    // Releng is separate because of the optinal non-default scm repo/branch/refspec values.
+    def relengSuffix = (BUILD_IDENTIFIER == 'Releng') ? BUILD_IDENTIFIER : ''
+    return "Pipeline_Build_Test_JDK${version}_${spec}${relengSuffix}"
 }
 
 /*
