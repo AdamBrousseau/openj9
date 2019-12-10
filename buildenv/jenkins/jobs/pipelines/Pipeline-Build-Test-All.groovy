@@ -111,6 +111,7 @@ SHORT_NAMES = ['all' : ['ppc64le_linux','ppc64le_linux_xl','s390x_linux','s390x_
             'zlinuxjit' : ['s390x_linux_jit'],
             'zlinuxlargeheap' : ['s390x_linux_xl'],
             'zlinuxxl' : ['s390x_linux_xl'],
+            'zos' : ['s390x_zos'],
             'plinux' : ['ppc64le_linux'],
             'plinuxjit' : ['ppc64le_linux_jit'],
             'plinuxlargeheap' : ['ppc64le_linux_xl'],
