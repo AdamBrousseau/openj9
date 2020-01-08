@@ -1160,45 +1160,56 @@ def set_build_extra_options(build_specs=null) {
 * Set the Git repository URL and branch for the AdoptOpenJDK Testing material.
 */
 def set_adoptopenjdk_tests_repository(build_releases=null) {
+    echo "Here"
     ADOPTOPENJDK_MAP = [:]
 
     if (build_releases) {
+        echo "Here1"
         for (release in build_releases) {
+            echo "Here2"
             // fetch from the variables file
             def adoptOpenJdkByReleaseMap = [:]
             if (get_value(VARIABLES.adoptopenjdk, release)) {
+                echo "Here3"
                 adoptOpenJdkByReleaseMap.putAll(get_value(VARIABLES.adoptopenjdk, release))
             } else {
+                echo "Here4"
                 adoptOpenJdkByReleaseMap.putAll(VARIABLES.adoptopenjdk.default)
             }
 
             if (params."ADOPTOPENJDK${release}_REPO") {
+                echo "Here5"
                 // override repo with user value
                 adoptOpenJdkByReleaseMap['repoUrl'] = params."ADOPTOPENJDK${release}_REPO"
             }
 
             if (params."ADOPTOPENJDK${release}_BRANCH") {
+                echo "Here5"
                 // override branch with user value
                 adoptOpenJdkByReleaseMap['branch'] = params."ADOPTOPENJDK${release}_BRANCH"
             }
 
             if (adoptOpenJdkByReleaseMap) {
+                echo "Here6"
                 ADOPTOPENJDK_MAP.put(release, adoptOpenJdkByReleaseMap)
             }
         }
 
         echo "ADOPTOPENJDK_MAP = ${ADOPTOPENJDK_MAP.toString()}"
     } else {
+        echo "Here7"
         // fetch from the variables file
         def adoptOpenJdkByReleaseMap = VARIABLES.adoptopenjdk.default
 
         ADOPTOPENJDK_REPO = params.ADOPTOPENJDK_REPO
         if (!ADOPTOPENJDK_REPO && adoptOpenJdkByReleaseMap) {
+            echo "Here8"
             ADOPTOPENJDK_REPO = adoptOpenJdkByReleaseMap.get('repoUrl')
         }
 
         ADOPTOPENJDK_BRANCH = params.ADOPTOPENJDK_BRANCH
         if (!ADOPTOPENJDK_BRANCH && adoptOpenJdkByReleaseMap) {
+            echo "Here9"
             ADOPTOPENJDK_BRANCH = adoptOpenJdkByReleaseMap.get('branch')
         }
 
