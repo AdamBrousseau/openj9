@@ -34,14 +34,18 @@ if ((CLEAN_CACHE_DIR == null) || (CLEAN_CACHE_DIR == '')) {
     CLEAN_CACHE_DIR = false
 }
 
-UPDATE_SETUP_NODES = params.UPDATE_SETUP_NODES
 UPDATE_BUILD_NODES = params.UPDATE_BUILD_NODES
 
-EXTENSIONS_REPOS = [[name: "openj9", url: "https://github.com/eclipse/openj9.git"]]
+EXTENSIONS_REPOS = [[name: "openj9", url: "git@github.ibm.com:runtimes/openj9.git"],
+                    [name: "omr", url: "git@github.ibm.com:runtimes/openj9-omr.git"],
+                    [name: "closedj9", url: "git@github.ibm.com:runtimes/closedj9.git"],
+                    [name: "tooling", url: "git@github.ibm.com:runtimes/tooling.git"],
+                    [name: "fips", url: "git@github.ibm.com:runtimes/fips.git"],
+                    [name: "binaries", url: "git@github.ibm.com:runtimes/binaries.git"],]
 
 properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '10')),
-            pipelineTriggers([cron('''# Daily at 11:00pm
-                                        0 23 * * *''')])])
+            pipelineTriggers([cron('''# Saturdays
+                                        H H * * 6''')])])
 
 def jobs = [:]
 
@@ -75,82 +79,37 @@ timeout(time: 6, unit: 'HOURS') {
                 def setupNodesNames = []
                 def buildNodesNames = []
 
-                if (UPDATE_SETUP_NODES) {
-                    // update openj9 repo cache on slaves that have SETUP_LABEL
-                    if (UPDATE_BUILD_NODES) {
-                        // remove build nodes from the setup nodes collection
-                        slaveNodes.addAll(jenkins.model.Jenkins.instance.getLabel(SETUP_LABEL).getNodes().minus(buildNodes))
-                    } else {
-                        slaveNodes.addAll(jenkins.model.Jenkins.instance.getLabel(SETUP_LABEL).getNodes())
+                // Update IBM repos cache on slaves
+                for (aNode in buildNodes) {
+                    if (aNode.toComputer().isOffline()) {
+                        // skip offline slave
+                        continue
                     }
 
-                    //add master if slaveNodes does not contain it already
-                    if (slaveNodes.intersect(jenkins.model.Jenkins.instance.getLabel('master').getNodes()).isEmpty()) {
-                        slaveNodes.addAll(jenkins.model.Jenkins.instance.getLabel('master').getNodes())
-                    }
+                    def nodeName = aNode.getDisplayName()
+                    buildNodesNames.add(nodeName)
 
-                    for (sNode in slaveNodes) {
-                        if (sNode.toComputer().isOffline()) {
-                            // skip offline slave
-                            continue
-                        }
-
-                        def sNodeName = sNode.getDisplayName()
-                        if (sNodeName == 'Jenkins') {
-                            sNodeName = 'master'
-                        }
-                        setupNodesNames.add(sNodeName)
-
-                        jobs["${sNodeName}"] = {
-                            node("${sNodeName}"){
-                                stage("${sNodeName} - Update Reference Repo") {
-                                    refresh(sNodeName, "${HOME}/openjdk_cache", EXTENSIONS_REPOS, true)
-                                }
-                            }
+                    def osLabels = ['sw.os.aix', 'sw.os.linux', 'sw.os.osx', 'sw.os.windows']
+                    def foundLabel = false
+                    def nodeLabels = aNode.getLabelString().tokenize(' ')
+                    for (osLabel in osLabels) {
+                        if (nodeLabels.contains(osLabel)) {
+                            foundLabel = true
+                            break
                         }
                     }
-                }
 
-                if (UPDATE_BUILD_NODES) {
-                    // update openjdk and openj9 repos cache on slaves
-                    for (aNode in buildNodes) {
-                        if (aNode.toComputer().isOffline()) {
-                            // skip offline slave
-                            continue
-                        }
+                    def repos = []
+                    if (jenkins.model.Jenkins.instance.getLabel(SETUP_LABEL).getNodes().contains(aNode)) {
+                        // add OpenJ9 repo
+                        repos.addAll(EXTENSIONS_REPOS)
+                        setupNodesNames.add(aNode)
+                    }
 
-                        def nodeName = aNode.getDisplayName()
-                        buildNodesNames.add(nodeName)
-
-                        def osLabels = ['sw.os.aix', 'sw.os.linux', 'sw.os.osx', 'sw.os.windows']
-                        def foundLabel = false
-                        def nodeLabels = aNode.getLabelString().tokenize(' ')
-                        for (osLabel in osLabels) {
-                            if (nodeLabels.contains(osLabel)) {
-                                foundLabel = true
-                                break
-                            }
-                        }
-
-                        // get Eclipse OpenJ9 extensions repositories from variables file
-                        def repos = get_openjdk_repos(VARIABLES.openjdk, foundLabel)
-
-                        if (nodeLabels.contains('ci.role.test')) {
-                            // add AdoptOpenJDK/openjdk-tests repository
-                            repos.add([name: "adoptopenjdk", url: VARIABLES.adoptopenjdk.default.get('repoUrl')])
-                        }
-
-                        if (jenkins.model.Jenkins.instance.getLabel(SETUP_LABEL).getNodes().contains(aNode)) {
-                            // add OpenJ9 repo
-                            repos.addAll(EXTENSIONS_REPOS)
-                            setupNodesNames.add(aNode)
-                        }
-
-                        jobs["${nodeName}"] = {
-                            node("${nodeName}"){
-                                stage("${nodeName} - Update Reference Repo") {
-                                    refresh(nodeName, "${HOME}/openjdk_cache", repos, foundLabel)
-                                }
+                    jobs["${nodeName}"] = {
+                        node("${nodeName}"){
+                            stage("${nodeName} - Update Reference Repo") {
+                                refresh(nodeName, "${HOME}/openjdk_cache", repos, foundLabel)
                             }
                         }
                     }
@@ -184,8 +143,8 @@ def refresh(node, cacheDir, repos, isKnownOs) {
             }
         }
         stage("${node} - Fetch") {
-            if (USER_CREDENTIALS_ID && isKnownOs) {
-                 sshagent(credentials:["${USER_CREDENTIALS_ID}"]) {
+            if (params.USER_CREDENTIALS_ID && isKnownOs) {
+                 sshagent(credentials:["${params.USER_CREDENTIALS_ID}"]) {
                     sh 'git fetch --all'
                 }
             } else {
@@ -204,30 +163,4 @@ def refresh(node, cacheDir, repos, isKnownOs) {
 def config(remoteName, remoteUrl) {
     sh "git config remote.${remoteName}.url ${remoteUrl}"
     sh "git config remote.${remoteName}.fetch +refs/heads/*:refs/remotes/${remoteName}/*"
-}
-
-/*
-* Parses openjdk map from variables file and fetch the URL of the extensions
-* repositories for the supported releases. Returns an array.
-*/
-def get_openjdk_repos(openJdkMap, useDefault) {
-    def repos = []
-    def releases = ['8', '11', '13', '14', 'next']
-
-    // iterate over VARIABLES.openjdk map and fetch the repository URL
-    openJdkMap.entrySet().each { mapEntry ->
-        if (releases.contains(mapEntry.key.toString())) {
-            if (useDefault) {
-                repos.add([name: "jdk${mapEntry.key}", url: mapEntry.value.get('default').get('repoUrl')])
-            } else {
-               mapEntry.value.entrySet().each { entry ->
-                    if (entry.key != 'default') {
-                        repos.add([name: "jdk${mapEntry.key}", url: entry.value.get('repoUrl')])
-                    }
-                }
-            }
-        }
-    }
-
-    return repos
 }
