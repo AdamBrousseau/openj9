@@ -32,8 +32,6 @@ if (SCM_BRANCH ==~ /origin/pr/[0-9]+/merge/) {
     SCM_BRANCH = 'master'
 }
 
-if (!binding.hasVariable('SCM_BRANCH')) SCM_BRANCH = 'refs/heads/master'
-
 pipelineScript = 'buildenv/jenkins/jobs/pipelines/Pipeline-Initialize.groovy'
 
 pipelineJob("$JOB_NAME") {
