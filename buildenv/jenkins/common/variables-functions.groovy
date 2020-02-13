@@ -771,6 +771,27 @@ def add_pr_to_description() {
     }
 }
 
+def setup() {
+    set_job_variables(params.JOB_TYPE)
+
+    switch (params.JOB_TYPE) {
+        case "pipeline":
+            buildFile = load 'buildenv/jenkins/common/pipeline-functions.groovy'
+            SHAS = buildFile.get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, VENDOR_TEST_REPOS_MAP, VENDOR_TEST_BRANCHES_MAP, VENDOR_TEST_SHAS_MAP)
+            BUILD_NAME = buildFile.get_build_job_name(SPEC, SDK_VERSION, BUILD_IDENTIFIER)
+            // Stash DSL file so we can quickly load it on master
+            if (params.AUTOMATIC_GENERATION != 'false'){
+                stash includes: 'buildenv/jenkins/jobs/pipelines/Pipeline_Template.groovy', name: 'DSL'
+            }
+            break
+        case "build":
+            buildFile = load 'buildenv/jenkins/common/build.groovy'
+            break
+        default:
+            error("Unknown Jenkins job type:'${params.JOB_TYPE}'")
+    }
+}
+
 /*
 * Initializes all of the required variables for a Jenkins job by given job type.
 */
@@ -810,6 +831,7 @@ def set_job_variables(job_type) {
             add_pr_to_description()
             break
         case "pipeline":
+            currentBuild.description = "<a href=\"${RUN_DISPLAY_URL}\">Blue Ocean</a>"
             // set variables for a pipeline job
             set_repos_variables()
             set_adoptopenjdk_tests_repository()
