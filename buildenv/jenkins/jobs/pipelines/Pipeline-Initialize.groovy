@@ -57,7 +57,7 @@ timestamps {
                         userRemoteConfigs: [remoteConfigParameters]]
 
                 variableFile = load 'buildenv/jenkins/common/variables-functions.groovy'
-                variableFile.setup()
+                buildFile = variableFile.setup()
             } finally {
                 // disableDeferredWipeout also requires deleteDirs. See https://issues.jenkins-ci.org/browse/JENKINS-54225
                 cleanWs notFailBuild: true, disableDeferredWipeout: true, deleteDirs: true
