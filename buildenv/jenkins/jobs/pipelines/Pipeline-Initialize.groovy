@@ -24,8 +24,8 @@ SETUP_LABEL = (params.SETUP_LABEL) ? params.SETUP_LABEL : 'worker'
 echo "SETUP_LABEL: ${SETUP_LABEL}"
 ARGS = ['SDK_VERSION', 'PLATFORM']
 def BUILD_NAME
-def variableFile
-def buildFile
+variableFile = ''
+buildFile = ''
 
 timestamps {
     timeout(time: 20, unit: 'HOURS') {
@@ -57,7 +57,7 @@ timestamps {
                         userRemoteConfigs: [remoteConfigParameters]]
 
                 variableFile = load 'buildenv/jenkins/common/variables-functions.groovy'
-                buildFile = variableFile.setup()
+                variableFile.setup()
             } finally {
                 // disableDeferredWipeout also requires deleteDirs. See https://issues.jenkins-ci.org/browse/JENKINS-54225
                 cleanWs notFailBuild: true, disableDeferredWipeout: true, deleteDirs: true

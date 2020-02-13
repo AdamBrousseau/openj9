@@ -790,7 +790,6 @@ def setup() {
         default:
             error("Unknown Jenkins job type:'${params.JOB_TYPE}'")
     }
-    return buildFile
 }
 
 /*
