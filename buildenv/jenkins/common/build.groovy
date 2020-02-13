@@ -470,6 +470,7 @@ def build_all() {
                         cleanWs notFailBuild: true, disableDeferredWipeout: true, deleteDirs: true
                     }
                 }
+            }
         }
     }
 }
