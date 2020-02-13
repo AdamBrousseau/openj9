@@ -28,6 +28,10 @@ if (!binding.hasVariable('VENDOR_BRANCH_DEFAULT')) VENDOR_BRANCH_DEFAULT = ''
 if (!binding.hasVariable('VENDOR_CREDENTIALS_ID_DEFAULT')) VENDOR_CREDENTIALS_ID_DEFAULT = ''
 if (!binding.hasVariable('DISCARDER_NUM_BUILDS')) DISCARDER_NUM_BUILDS = '1'
 if (!binding.hasVariable('SCM_REPO')) SCM_REPO = 'https://github.com/eclipse/openj9.git'
+if (SCM_BRANCH ==~ /origin/pr/[0-9]+/merge/) {
+    SCM_BRANCH = 'master'
+}
+
 if (!binding.hasVariable('SCM_BRANCH')) SCM_BRANCH = 'refs/heads/master'
 
 pipelineScript = 'buildenv/jenkins/jobs/pipelines/Pipeline-Initialize.groovy'
@@ -46,7 +50,6 @@ pipelineJob("$JOB_NAME") {
                         cloneOptions {
                             reference('$HOME/openjdk_cache')
                         }
-                        wipeOutWorkspace()
                     }
                 }
             }
