@@ -476,7 +476,7 @@ def get_target_name(name) {
 
 def get_build_job_name(spec, version, identifier) {
     id = convert_build_identifier(identifier)
-    return "Build_JDK${version}_${spec}_${id}"
+    return "Build_JDK${version}_${spec}_${id}_Adam"
 }
 
 def get_test_job_name(targetName, spec, version, identifier) {
