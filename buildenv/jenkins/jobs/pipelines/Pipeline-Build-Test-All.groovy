@@ -536,7 +536,7 @@ def get_summary_table(identifier) {
                     pipelineLink = buildFile.get_build_embedded_status_link(build)
                     downstreamBuilds.putAll(buildFile.get_downstream_builds(build, pipelineName, downstreamJobNames.values()))
                     pipelineDuration = build.getDurationString()
-                    pipelineDuration.replace(' and counting', '+')
+                    //pipelineDuration.replace(' and counting', '+')
 
                     if (build.getResult()) {
                         // pipeline finished, cache its status
@@ -545,7 +545,7 @@ def get_summary_table(identifier) {
                 }
             }
 
-            innerTable += "<tr><td>&nbsp;</td><td style=\"text-align: right;\">${pipelineLink}</td><td style=\"text-align: right;\">${pipelineDuration}</td></tr>"
+            innerTable += "<tr><td>&nbsp;</td><td style=\"text-align: right;\">${pipelineLink}</td><td style=\"text-align: right;\" white-space: nowrap;>>${pipelineDuration}</td></tr>"
 
             // add pipeline's downstream builds
             downstreamJobNames.each { label, jobName ->
