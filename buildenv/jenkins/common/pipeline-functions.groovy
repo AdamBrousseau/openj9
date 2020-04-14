@@ -343,6 +343,7 @@ def build_with_slack(DOWNSTREAM_JOB_NAME, ghprbGhRepository, ghprbActualCommit, 
             // If restart is approved, recursively call this function until we get a pass or a restart-rejection
             return build_with_slack(DOWNSTREAM_JOB_NAME, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, PARAMETERS)
         }
+        error("Downstream job ${DOWNSTREAM_JOB_NAME} ${JOB.result}")
     } else {
         echo "Downstream job ${DOWNSTREAM_JOB_NAME} PASSED after ${DOWNSTREAM_JOB_TIME}"
         // Set Github Commit Status
