@@ -681,10 +681,8 @@ def set_test_misc() {
     def buildspec = buildspec_manager.getSpec(SPEC)
     def excludedTests = buildspec.getVectorField("excluded_tests", SDK_VERSION)
     if (excludedTests) {
-        excludedTestsArray = []
-        excludedTestsArray.addAll(excludedTests)
         TESTS.each { id, target ->
-            if (excludedTestsArray.contains(id)) {
+            if (excludedTests.contains(id)) {
                 echo "Excluding test target:'${id}'"
                 TESTS.remove(id)
             }
@@ -693,19 +691,15 @@ def set_test_misc() {
 
     TESTS.each { id, target ->
         flag = buildspec.getScalarField("test_flags", id) ?: ''
-        if (flag) {
-            target['testFlag'] = (target['testFlag']) ? error("Cannot set more than 1 TEST_FLAG") : flag
-        } else {
-            target['testFlag'] = (target['testFlag']) ? target['testFlag'] : ''
+        if (!target['testFlag']) {
+            target['testFlag'] = flag
+        } else if (flag) {
+            error("Cannot set more than 1 TEST_FLAG:'${target['testFlag']}' & '${flag}'")
         }
-    }
 
-    // Set test param KEEP_REPORTDIR to false unless set true in variable file.
-    TESTS.each { id, target ->
+        // Set test param KEEP_REPORTDIR to false unless set true in variable file.
         target['keepReportDir'] = buildspec_manager.getSpec('misc').getScalarField("test_keep_reportdir", id) ?: 'false'
-    }
 
-    TESTS.each { id, target ->
         target['buildList'] = buildspec.getScalarField("test_build_list", id) ?: ''
     }
 
