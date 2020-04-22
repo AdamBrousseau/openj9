@@ -117,7 +117,12 @@ timeout(time: TIMEOUT_TIME.toInteger(), unit: TIMEOUT_UNITS) {
                                  'target*.tmp',
                                  'sharedcacheapi',
                                  'intermediateClassCreateTest',
-                                 'sh-np.*']
+                                 'sh-np.*',
+                                 'core*',
+                                 'Snap*',
+                                 'heap*',
+                                 'jitdump*',
+                                 'javacore*']
 
                 for (aNode in jenkins.model.Jenkins.instance.getLabel(LABEL).getNodes()) {
                     def nodeName = aNode.getDisplayName()
@@ -172,9 +177,11 @@ timeout(time: TIMEOUT_TIME.toInteger(), unit: TIMEOUT_UNITS) {
                                                 ipcs -ma
                                                 ipcs -ma | awk '/^m / { if (\$9 == 0) { print \$2 }}' | xargs -n 1 ipcrm -m
                                                 ipcs -ma
-						du -sh /cores
-						rm -rf /cores/*
-						du -sh /cores
+                                                du -sh /cores
+                                                ls -al /cores
+                                                find /cores -user $USER -exec rm -f {} \\;
+                                                du -sh /cores
+                                                ls -al /cores
                                             """
                                         }
                                     }
