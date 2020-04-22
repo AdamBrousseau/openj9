@@ -281,11 +281,10 @@ def get_other_workspaces(workspaceDir) {
 */
 def sanitize_node(nodeName) {
     def workingNode = jenkins.model.Jenkins.instance.getNode(nodeName)
-    def workingComputer = workingNode.toComputer()
 
-    workingComputer.setTemporarilyOffline(true, null)
     try {
         def cmd = ''
+        def cmd1 = ''
 
         if (workingNode.getLabelString().indexOf("sw.os.windows") != -1) {
             println("\t ${nodeName}: Rebooting...")
@@ -295,29 +294,18 @@ def sanitize_node(nodeName) {
         } else {
             println("\t ${nodeName}: Killing all owned processes...")
 
-            cmd = "kill -9 -1"
+            cmd = "ps -f -u \$USER | grep -i [j]ava | grep -vEi 'slave|remoting' | awk '{print \$2}' | xargs kill -9"
+            cmd1 = "ps -f -u \$USER | grep -i [j]ava | grep -vEi 'slave|remoting'"
             if (workingNode.getLabelString().indexOf("sw.os.zos") != -1) {
                 cmd = "ps -f -u ${env.USER} | awk '{print \$2}' | xargs kill -s KILL"
             }
         }
 
         // execute command
+        sh "${cmd1}"
         sh "${cmd}"
 
     } catch(e) {
         println(e.getMessage())
-    }
-
-    //reconnect slave
-    timeout(time: RECONNECT_TIMEOUT.toInteger(), unit: 'MINUTES') {
-        println("\t ${nodeName}: Disconnecting...")
-        workingComputer.disconnect(null)
-        workingComputer.waitUntilOffline()
-
-        println("\t ${nodeName}: Connecting...")
-        workingComputer.connect(false)
-        workingComputer.setTemporarilyOffline(false, null)
-        workingComputer.waitUntilOnline()
-        println("\t ${nodeName} is back online: ${workingComputer.isOnline()}")
     }
 }
