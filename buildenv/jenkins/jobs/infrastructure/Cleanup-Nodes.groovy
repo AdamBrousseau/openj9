@@ -26,8 +26,6 @@ defaultLabel = 'ci.role.build || ci.role.test'
 defaultMode = 'cleanup'
 defaultTime = '12'
 defaultUnits = 'HOURS'
-defaultReconnectTimeout = '20' //minutes
-defaultSleepTime = '30' //seconds
 
 SETUP_LABEL = params.SETUP_LABEL
 if (!SETUP_LABEL) {
@@ -63,31 +61,6 @@ if (!TIMEOUT_UNITS) {
 
 SLACK_CHANNEL = params.SLACK_CHANNEL
 
-RECONNECT_TIMEOUT = params.RECONNECT_TIMEOUT
-if (!RECONNECT_TIMEOUT) {
-    RECONNECT_TIMEOUT = defaultReconnectTimeout
-}
-
-SLEEP_TIME = params.SLEEP_TIME
-if (!SLEEP_TIME) {
-    SLEEP_TIME = defaultSleepTime
-}
-
-PARAMETERS = [string(name: 'SETUP_LABEL', defaultValue: defaultSetupLabel),
-              string(name: 'LABEL', defaultValue: defaultLabel),
-              choice(name: 'MODE', choices: ['cleanup', 'sanitize'], defaultValue: defaultMode),
-              string(name: 'TIMEOUT_TIME', defaultValue: defaultTime),
-              string(name: 'TIMEOUT_UNITS', defaultValue: defaultUnits),
-              string(name: 'RECONNECT_TIMEOUT', defaultValue: defaultReconnectTimeout),
-              string(name: 'SLEEP_TIME', defaultValue: defaultSleepTime),
-              string(name: 'SLACK_CHANNEL', defaultValue: '')]
-/*
-properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '5')),
-            pipelineTriggers([cron('''# Daily at 8am, 12pm, 4pm, 11pm (before nightly build)
-                                        0 8,12,16,23 * * *''')]),
-            parameters(PARAMETERS)])
-*/
-
 jobs = [:]
 offlineSlaves = [:]
 buildNodes = []
@@ -96,29 +69,6 @@ timeout(time: TIMEOUT_TIME.toInteger(), unit: TIMEOUT_UNITS) {
     timestamps {
         node(SETUP_LABEL) {
             try {
-                def cleanDirs = ['NoEntryTest*.zip',
-                                 'auth*.login',
-                                 'tmp*',
-                                 'classes*',
-                                 'aci*',
-                                 'append*',
-                                 'mlib*',
-                                 'resource-*',
-                                 'openj9tr_resources*',
-                                 'testParentDir',
-                                 'jni-*',
-                                 'mauve',
-                                 'test*',
-                                 'blah-*.tmp',
-                                 'lines*.tmp',
-                                 'prefix*.json',
-                                 'sink*.tmp',
-                                 'source*.tmp',
-                                 'target*.tmp',
-                                 'sharedcacheapi',
-                                 'intermediateClassCreateTest',
-                                 'sh-np.*']
-
                 for (aNode in jenkins.model.Jenkins.instance.getLabel(LABEL).getNodes()) {
                     def nodeName = aNode.getDisplayName()
 
@@ -145,6 +95,13 @@ timeout(time: TIMEOUT_TIME.toInteger(), unit: TIMEOUT_UNITS) {
                     // cache job
                     jobs["${nodeName}"] = {
                         node("${nodeName}") {
+                            // Sanitize first to catch any dangling processes.
+                            if (MODES.contains('sanitize')) {
+                                stage("${nodeName} - Sanitize slave") {
+                                    sanitize_node(nodeName)
+                                }
+                            }
+
                             if (MODES.contains('cleanup')) {
                                 stage("${nodeName} - Cleanup Workspaces") {
                                     def buildWorkspace = "${env.WORKSPACE}"
@@ -153,17 +110,7 @@ timeout(time: TIMEOUT_TIME.toInteger(), unit: TIMEOUT_UNITS) {
                                         buildWorkspace = sh(script: "cygpath -u '${env.WORKSPACE}'", returnStdout: true).trim()
                                     }
 
-                                    def cleanDirsStr = "/tmp/${cleanDirs.join(' /tmp/')}"
-                                    if (nodeLabels.contains('sw.os.windows')) {
-                                        // test resources
-                                        cleanDirsStr += " ${buildWorkspace}/../../"
-                                        cleanDirsStr += cleanDirs.join(" ${buildWorkspace}/../../")
-                                        // shared classes cache
-                                        cleanDirsStr += " ${buildWorkspace}/../../javasharedresources /tmp/javasharedresources /temp/javasharedresources"
-                                    }
-
-                                    // cleanup test results
-                                    sh "rm -fr ${cleanDirsStr}"
+                                    sh 'find /tmp -maxdepth 1 -user $USER'
 
                                     // Cleanup OSX shared memory and content in /cores
                                     if (nodeLabels.contains('sw.os.osx')) {
@@ -172,39 +119,23 @@ timeout(time: TIMEOUT_TIME.toInteger(), unit: TIMEOUT_UNITS) {
                                                 ipcs -ma
                                                 ipcs -ma | awk '/^m / { if (\$9 == 0) { print \$2 }}' | xargs -n 1 ipcrm -m
                                                 ipcs -ma
-						du -sh /cores
-						rm -rf /cores/*
-						du -sh /cores
+                                                du -sh /cores
+                                                ls -al /cores
+                                                find /tmp -maxdepth 1 -user $USER
+                                                du -sh /cores
                                             """
                                         }
                                     }
 
                                     // Clean up defunct pipelines workspaces
                                     def retStatus = 0
-                                    def cleanWSDirs = get_other_workspaces("${buildWorkspace}/../")
-
-                                    if (cleanWSDirs) {
-                                        def cleanWSDirsStr = "${buildWorkspace}/../"
-                                        cleanWSDirsStr += cleanWSDirs.join(" ${buildWorkspace}/../")
-
-                                        retry(3) {
-                                            if (retStatus != 0) {
-                                                sleep(time: SLEEP_TIME.toInteger(), unit: 'SECONDS')
-                                            }
-
-                                            retStatus = sh script: "rm -rf ${cleanWSDirsStr}", returnStatus: true
-                                        }
-
+                                    retry(3) {
                                         if (retStatus != 0) {
-                                            throw new Exception("Could not delete old builds workspaces on ${nodeName}!")
+                                            sleep(time: SLEEP_TIME.toInteger(), unit: 'SECONDS')
                                         }
-                                    }
-                                }
-                            }
 
-                            if (MODES.contains('sanitize')) {
-                                stage("${nodeName} - Sanitize slave") {
-                                    sanitize_node(nodeName)
+                                        retStatus = sh script: "find `cd ../ && pwd` -maxdepth 1 -path `pwd` -o -prune -print", returnStatus: true
+                                    }
                                 }
                             }
                         }
@@ -258,18 +189,6 @@ timeout(time: TIMEOUT_TIME.toInteger(), unit: TIMEOUT_UNITS) {
 }
 
 /*
-* Return a list of workspace directories (current build workspace excluded)
-*/
-def get_other_workspaces(workspaceDir) {
-    // fetch all directories in workspaceDir (this should not fail)
-    def workspaces = sh(script: "ls ${workspaceDir}", returnStdout: true).trim().tokenize(System.lineSeparator())
-    // remove current build workspace
-    def otherWS = workspaces.findAll { ws -> ws.startsWith(JOB_NAME) == false }
-
-    return otherWS
-}
-
-/*
 * Kill all processes and reconnect a Jenkins node
 */
 def sanitize_node(nodeName) {
@@ -278,39 +197,9 @@ def sanitize_node(nodeName) {
 
     workingComputer.setTemporarilyOffline(true, null)
     try {
-        def cmd = ''
-
-        if (workingNode.getLabelString().indexOf("sw.os.windows") != -1) {
-            println("\t ${nodeName}: Rebooting...")
-            // NB: user requires shut down permissions (SeShutdownPrivilege) or
-            // belongs to the Administrators group
-            cmd = "cmd.exe /K shutdown /f /r"
-        } else {
-            println("\t ${nodeName}: Killing all owned processes...")
-
-            cmd = "kill -9 -1"
-            if (workingNode.getLabelString().indexOf("sw.os.zos") != -1) {
-                cmd = "ps -f -u ${env.USER} | awk '{print \$2}' | xargs kill -s KILL"
-            }
-        }
-
-        // execute command
-        sh "${cmd}"
-
+        println("\t ${nodeName}: Killing all owned processes...")
+        sh "ps -fu ${env.USER} | grep [j]ava | egrep -v 'slave.jar|remoting.jar'"
     } catch(e) {
         println(e.getMessage())
-    }
-
-    //reconnect slave
-    timeout(time: RECONNECT_TIMEOUT.toInteger(), unit: 'MINUTES') {
-        println("\t ${nodeName}: Disconnecting...")
-        workingComputer.disconnect(null)
-        workingComputer.waitUntilOffline()
-
-        println("\t ${nodeName}: Connecting...")
-        workingComputer.connect(false)
-        workingComputer.setTemporarilyOffline(false, null)
-        workingComputer.waitUntilOnline()
-        println("\t ${nodeName} is back online: ${workingComputer.isOnline()}")
     }
 }
