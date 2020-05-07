@@ -91,6 +91,7 @@ properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKe
 jobs = [:]
 offlineSlaves = [:]
 buildNodes = []
+runtimes = [:]
 
 timeout(time: TIMEOUT_TIME.toInteger(), unit: TIMEOUT_UNITS) {
     timestamps {
@@ -142,9 +143,12 @@ timeout(time: TIMEOUT_TIME.toInteger(), unit: TIMEOUT_UNITS) {
 
                     buildNodes.add(nodeName)
 
+                    runtimes[nodeName] = [:]
                     // cache job
                     jobs["${nodeName}"] = {
+                        runtimes[nodeName]['Queue'] = System.currentTimeMillis()
                         node("${nodeName}") {
+                            runtimes[nodeName]['Running'] = System.currentTimeMillis()
                             if (MODES.contains('cleanup')) {
                                 stage("${nodeName} - Cleanup Workspaces") {
                                     def buildWorkspace = "${env.WORKSPACE}"
@@ -208,6 +212,10 @@ timeout(time: TIMEOUT_TIME.toInteger(), unit: TIMEOUT_UNITS) {
                                 }
                             }
                         }
+                        runtimes[nodeName]['Complete'] = System.currentTimeMillis()
+                        runtimes[nodeName]['TimeInQueue'] = (runtimes[nodeName]['Running'] - runtimes[nodeName]['Queue']) / 1000 / 60
+                        runtimes[nodeName]['Runtime'] = (runtimes[nodeName]['Complete'] - runtimes[nodeName]['Running']) / 1000 / 60
+                        println runtimes[nodeName]
                     }
                 }
 
@@ -253,6 +261,7 @@ timeout(time: TIMEOUT_TIME.toInteger(), unit: TIMEOUT_UNITS) {
                     slackSend channel: SLACK_CHANNEL, color: 'warning', message: "${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>) left nodes offline: ${offlineNodes.join(',')}"
                 }
             }
+            println runtimes
         }
     }
 }
