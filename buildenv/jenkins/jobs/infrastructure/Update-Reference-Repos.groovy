@@ -67,6 +67,8 @@ timeout(time: 6, unit: 'HOURS') {
                 variableFile.set_user_credentials()
 
                 def buildNodes = jenkins.model.Jenkins.instance.getLabel(LABEL).getNodes()
+                println buildNodes
+                println buildNodes.class
                 def slaveNodes = []
                 def setupNodesNames = []
                 def buildNodesNames = []
@@ -110,12 +112,16 @@ timeout(time: 6, unit: 'HOURS') {
                 if (UPDATE_BUILD_NODES) {
                     // update openjdk and openj9 repos cache on slaves
                     for (aNode in buildNodes) {
+                        println aNode
+                        println aNode.class
                         if (aNode.toComputer().isOffline()) {
                             // skip offline slave
                             continue
                         }
 
                         def nodeName = aNode.getDisplayName()
+                        println nodeName
+                        println nodeName.class
                         buildNodesNames.add(nodeName)
 
                         def osLabels = ['sw.os.aix', 'sw.os.linux', 'sw.os.osx', 'sw.os.windows']
