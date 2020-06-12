@@ -1409,6 +1409,18 @@ def create_job(JOB_NAME, SDK_VERSION, SPEC, downstreamJobType, id){
         VENDOR_CREDENTIALS_ID_DEFAULT = ''
     }
 
+    println JOB_NAME
+    println SDK_VERSION
+    println SPEC
+    println VARIABLE_FILE_DEFAULT
+    println VENDOR_REPO_DEFAULT
+    println VENDOR_BRANCH_DEFAULT
+    println VENDOR_CREDENTIALS_ID_DEFAULT
+    println downstreamJobType
+    println DISCARDER_NUM_BUILDS
+    println SCM_REPO
+    println SCM_BRANCH
+
     // Configuring the build discarder in the downstream project
 
     DISCARDER_NUM_BUILDS = get_value(VARIABLES.build_discarder.logs, id)
