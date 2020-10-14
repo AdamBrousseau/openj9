@@ -1,3 +1,4 @@
+foo
 <!--
 Copyright (c) 2017, 2019 IBM Corp. and others
 
