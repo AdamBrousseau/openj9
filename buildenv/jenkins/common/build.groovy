@@ -276,7 +276,10 @@ def build() {
             dir(OPENJDK_CLONE_DIR) {
                 try {
                     def freemarker_option = FREEMARKER ? "--with-freemarker-jar=${FREEMARKER}" : ""
-                    sh "${BUILD_ENV_CMD} bash configure ${freemarker_option} --with-boot-jdk=${BOOT_JDK} ${EXTRA_CONFIGURE_OPTIONS} && make ${EXTRA_MAKE_OPTIONS} ${make_target}"
+                    sh """
+                        ${BUILD_ENV_CMD} bash configure ${freemarker_option} --with-boot-jdk=${BOOT_JDK} ${EXTRA_CONFIGURE_OPTIONS}
+                        make ${EXTRA_MAKE_OPTIONS} ${make_target}
+                    """
                 } catch (e) {
                     archive_diagnostics()
                     throw e
