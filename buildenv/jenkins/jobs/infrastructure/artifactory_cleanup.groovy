@@ -153,6 +153,20 @@ def cleanupTime(artifactory_server, artifactory_repo , artifactory_days_to_keep_
             echo "There are ${data.results.size()} artifacts over ${artifactory_days_to_keep_artifacts} days old.\nCleaning them up"
 
             def artifacts_to_be_deleted = data.results.uri
+            println '''#################################################
+            # DATA
+            ##################################################'''
+            println data
+            println '''#################################################
+            # DATA.RESULTS
+            ##################################################'''
+            println data.results
+            println '''#################################################
+            # DATA.RESUTLS.URI
+            ##################################################'''
+            println data.results.uri
+
+            error('stop')
             def artifactFolders = []
             artifacts_to_be_deleted.each() { uri ->
                 artifactFolders.add(uri.substring(0,uri.lastIndexOf('/')).minus('/api/storage'))
