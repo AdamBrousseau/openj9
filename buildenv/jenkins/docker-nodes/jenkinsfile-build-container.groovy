@@ -47,11 +47,7 @@ if ("${OS}" == "centos6") {
         BUILD_OPTS = "--dist=centos --version=6 --cuda"
     }
 } else if ("${OS}" == "centos7") {
-    if ("${ARCH}" == "ppc64le") {
-        BUILD_OPTS = "--dist=centos --version=7"
-    } else if ("${ARCH}" == "x86") {
-        BUILD_OPTS = "--dist=centos --version=7 --criu"
-    }
+    BUILD_OPTS = "--dist=centos --version=7 --criu"
 } else if ("${OS}" == "ubuntu16") {
     BUILD_OPTS = "--dist=ubuntu --version=16.04"
 } else if ("${OS}" == "ubuntu18") {
