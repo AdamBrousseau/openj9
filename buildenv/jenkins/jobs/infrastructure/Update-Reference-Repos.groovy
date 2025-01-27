@@ -73,7 +73,6 @@ timeout(time: 6, unit: 'HOURS') {
                 def todoNodes = []
                 def setupNodesNames = []
                 def buildNodesNames = []
-                def builtInLabel = 'master || built-in' //"master" label could be removed after built-in-node-migration
 
                 if (UPDATE_SETUP_NODES) {
                     // update openj9 repo cache on nodes that have SETUP_LABEL
@@ -84,11 +83,6 @@ timeout(time: 6, unit: 'HOURS') {
                         todoNodes.addAll(jenkins.model.Jenkins.instance.getLabel(SETUP_LABEL).getNodes())
                     }
 
-                    //add Jenkins Manager node if todoNodes does not contain it already
-                    if (todoNodes.intersect(jenkins.model.Jenkins.instance.getLabel(builtInLabel).getNodes()).isEmpty()) {
-                        todoNodes.addAll(jenkins.model.Jenkins.instance.getLabel(builtInLabel).getNodes())
-                    }
-
                     for (sNode in todoNodes) {
                         if (sNode.toComputer().isOffline()) {
                             // skip offline node
@@ -96,10 +90,6 @@ timeout(time: 6, unit: 'HOURS') {
                         }
 
                         def sNodeName = sNode.getDisplayName()
-                        if (!sNode.toComputer().name) {
-                            sNodeName = builtInLabel
-                        }
-
                         setupNodesNames.add(sNodeName)
 
                         jobs["${sNodeName}"] = {
