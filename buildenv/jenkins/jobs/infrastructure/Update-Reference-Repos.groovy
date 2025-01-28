@@ -197,8 +197,11 @@ def refresh(node, cacheDir, repos, isKnownOs) {
                 sh "git fetch --all"
             }
         }
-        stage("${node} - GC Repo") {
-            sh "git gc --aggressive --prune=all"
+        if (!nodeLabels.contains('sw.os.aix')) {
+            // Do not gc on aix. Seems to be problematic #20346
+            stage("${node} - GC Repo") {
+                sh "git gc --aggressive --prune=all"
+            }
         }
     }
 }
