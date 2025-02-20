@@ -142,9 +142,14 @@ def cleanupTime(artifactory_server, artifactory_repo , artifactory_days_to_keep_
         def current_time = date.getTime()
         def created_before_time = date.minus(artifactory_days_to_keep_artifacts).getTime()
         echo "Getting all artifacts over ${artifactory_days_to_keep_artifacts} days old"
-        currentBuild.description = "Deleting build over ${artifactory_days_to_keep_artifacts} days"
+        if ("${params.DRY_RUN}" == "true") {
+            currentBuild.description = "Dry Run<br>"
+        } else {
+            currentBuild.description = ""
+        }
+        currentBuild.description += "Deleting build over ${artifactory_days_to_keep_artifacts} days"
 
-        def request = httpRequest authentication: artifactoryCreds, consoleLogResponseBody: true, validResponseCodes: '200,404', url: "${artifactory_server}/api/search/usage?notUsedSince=${current_time}&createdBefore=${created_before_time}&repos=${artifactory_repo}"
+        def request = httpRequest authentication: artifactoryCreds, consoleLogResponseBody: true, validResponseCodes: '200,404', url: "${artifactory_server}/api/search/usage?notUsedSince=${current_time}&createdBefore=${created_before_time}&repos=${artifactory_repo}&artifactory.search.userQueryLimit"
         data = readJSON text: request.getContent()
         requestStatus = request.getStatus()
     }
