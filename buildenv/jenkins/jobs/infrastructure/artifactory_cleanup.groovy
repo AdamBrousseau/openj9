@@ -159,8 +159,12 @@ def cleanupTime(artifactory_server, artifactory_repo , artifactory_days_to_keep_
             }
             artifactFoldersUnique = artifactFolders.unique()
             artifactFoldersUnique.each() { uri ->
-                //httpRequest authentication: artifactoryCreds, httpMode: 'DELETE', consoleLogResponseBody: true, url: uri
-                echo "Delete: $uri"
+                if ("${params.DRY_RUN}" == "false") {
+                    //httpRequest authentication: artifactoryCreds, httpMode: 'DELETE', consoleLogResponseBody: true, url: uri
+                    echo "Delete: $uri"
+                } else {
+                    echo "Dry run delete: $uri"
+                }
             }
             echo 'Deleted all the old artifacts'
             currentBuild.description += "<br>Deleted ${artifacts_to_be_deleted.size()} artifacts"
