@@ -117,8 +117,7 @@ def cleanupBuilds(artifactory_server, artifactory_repo, jobToCheck, artifactory_
             for (i = 0; i < amount_deleted; i++) {
                 echo "Deleting Build #${folderNames[i]}"
                 if ("${params.DRY_RUN}" == "false") {
-                    //httpRequest authentication: artifactoryCreds, httpMode: 'DELETE', consoleLogResponseBody: true, url: "${artifactory_server}/${env.ARTIFACTORY_REPO}${internalSubfolder}${testSubfolder}/${jobToCheck}/${folderNames[i]}"
-                    echo "delete"
+                    httpRequest authentication: artifactoryCreds, httpMode: 'DELETE', consoleLogResponseBody: true, url: "${artifactory_server}/${env.ARTIFACTORY_REPO}${internalSubfolder}${testSubfolder}/${jobToCheck}/${folderNames[i]}"
                 }
             }
         } else {
@@ -128,8 +127,7 @@ def cleanupBuilds(artifactory_server, artifactory_repo, jobToCheck, artifactory_
         if (artifactory_max_num_artifacts == 0) {
             echo "Deleting Entire Build '${jobToCheck}'"
             if ("${params.DRY_RUN}" == "false") {
-                //httpRequest authentication: artifactoryCreds, httpMode: 'DELETE', consoleLogResponseBody: true, url: "${artifactory_server}/${env.ARTIFACTORY_REPO}${internalSubfolder}${testSubfolder}/${jobToCheck}"
-                echo "delete folder"
+                httpRequest authentication: artifactoryCreds, httpMode: 'DELETE', consoleLogResponseBody: true, url: "${artifactory_server}/${env.ARTIFACTORY_REPO}${internalSubfolder}${testSubfolder}/${jobToCheck}"
             }
         }
         currentBuild.description += "<br>Deleted ${amount_deleted} artifacts"
