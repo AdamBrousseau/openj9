@@ -82,15 +82,19 @@ def cleanupBuilds(artifactory_server, artifactory_repo, jobToCheck, artifactory_
     // This parameter is originally a string and needs to be casted as an Integer
     def artifactory_max_num_artifacts = artifactory_num_artifacts as Integer
     def testSubfolder = ''
+    def internalSubfolder = ''
     if (jobToCheck.contains("Test")) {
         testSubfolder = '/Test'
+    }
+    if (JENKINS)URL.contains("hyc-runtimes-jenkins") {
+        internalSubfolder = '/hyc-runtimes-jenkins.swg-devops.com'
     }
     stage('Discover Stored Artifacts') {
         echo "Cleaning up ${jobToCheck}"
         echo "Keeping the latest ${artifactory_max_num_artifacts} builds"
         currentBuild.description = "Keeping ${artifactory_max_num_artifacts} builds of ${jobToCheck}"
 
-        def request = httpRequest authentication: artifactoryCreds, consoleLogResponseBody: true, validResponseCodes: '200,404', url: "${artifactory_server}/api/storage/${artifactory_repo}${testSubfolder}/${jobToCheck}"
+        def request = httpRequest authentication: artifactoryCreds, consoleLogResponseBody: true, validResponseCodes: '200,404', url: "${artifactory_server}/api/storage/${artifactory_repo}${internalSubfolder}${testSubfolder}/${jobToCheck}"
 
         requestStatus = request.getStatus()
         if (requestStatus == 200) {
@@ -112,7 +116,7 @@ def cleanupBuilds(artifactory_server, artifactory_repo, jobToCheck, artifactory_
             def folderNames = getFolderNumbers(data.children.uri)
             for (i = 0; i < amount_deleted; i++) {
                 echo "Deleting Build #${folderNames[i]}"
-                //httpRequest authentication: artifactoryCreds, httpMode: 'DELETE', consoleLogResponseBody: true, url: "${artifactory_server}/${env.ARTIFACTORY_REPO}${testSubfolder}/${jobToCheck}/${folderNames[i]}"
+                //httpRequest authentication: artifactoryCreds, httpMode: 'DELETE', consoleLogResponseBody: true, url: "${artifactory_server}/${env.ARTIFACTORY_REPO}${internalSubfolder}${testSubfolder}/${jobToCheck}/${folderNames[i]}"
             }
         } else {
             echo 'There are no artifacts to delete'
@@ -120,7 +124,7 @@ def cleanupBuilds(artifactory_server, artifactory_repo, jobToCheck, artifactory_
         }
         if (artifactory_max_num_artifacts == 0) {
             echo "Deleting Entire Build '${jobToCheck}'"
-            //httpRequest authentication: artifactoryCreds, httpMode: 'DELETE', consoleLogResponseBody: true, url: "${artifactory_server}/${env.ARTIFACTORY_REPO}${testSubfolder}/${jobToCheck}"
+            //httpRequest authentication: artifactoryCreds, httpMode: 'DELETE', consoleLogResponseBody: true, url: "${artifactory_server}/${env.ARTIFACTORY_REPO}${internalSubfolder}${testSubfolder}/${jobToCheck}"
         }
         currentBuild.description += "<br>Deleted ${amount_deleted} artifacts"
     }
