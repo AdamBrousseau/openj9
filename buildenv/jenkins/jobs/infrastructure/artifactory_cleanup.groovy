@@ -86,7 +86,7 @@ def cleanupBuilds(artifactory_server, artifactory_repo, jobToCheck, artifactory_
     if (jobToCheck.contains("Test")) {
         testSubfolder = '/Test'
     }
-    if (JENKINS)URL.contains("hyc-runtimes-jenkins") {
+    if (JENKINS_URL.contains("hyc-runtimes-jenkins")) {
         internalSubfolder = '/hyc-runtimes-jenkins.swg-devops.com'
     }
     stage('Discover Stored Artifacts') {
