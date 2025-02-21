@@ -74,6 +74,7 @@ timestamps {
             }
         } catch (e) {
             slackSend channel: '#jenkins-sandbox', color: 'danger', message: "Failed: ${JOB_NAME} #${BUILD_NUMBER} (<${BUILD_URL}|Open>)"
+            throw e
         }
     }
 }
