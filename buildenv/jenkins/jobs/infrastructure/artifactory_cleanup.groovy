@@ -146,8 +146,8 @@ def cleanupTime(artifactory_server, artifactory_repo , artifactory_days_to_keep_
         echo "Getting all artifacts over ${artifactory_days_to_keep_artifacts} days old"
         currentBuild.description = "Deleting build over ${artifactory_days_to_keep_artifacts} days"
 
-        //def request = httpRequest authentication: artifactoryCreds, consoleLogResponseBody: true, validResponseCodes: '200,404', url: "${artifactory_server}/api/search/usage?notUsedSince=${current_time}&createdBefore=${created_before_time}&repos=${artifactory_repo}"
-        def request = httpRequest authentication: artifactoryCreds, consoleLogResponseBody: true, validResponseCodes: '200,404', url: "${artifactory_server}/api/search/pattern?pattern=${artifactory_repo}:${regexSearch}/*"
+        def request = httpRequest authentication: artifactoryCreds, consoleLogResponseBody: true, validResponseCodes: '200,404', url: "${artifactory_server}/api/search/usage?notUsedSince=${current_time}&createdBefore=${created_before_time}&repos=${artifactory_repo}"
+        //def request = httpRequest authentication: artifactoryCreds, consoleLogResponseBody: true, validResponseCodes: '200,404', url: "${artifactory_server}/api/search/pattern?pattern=${artifactory_repo}:${regexSearch}/*"
         data = readJSON text: request.getContent()
         println data
         requestStatus = request.getStatus()
