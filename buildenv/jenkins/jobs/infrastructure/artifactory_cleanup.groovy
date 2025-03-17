@@ -30,6 +30,7 @@
  *   ARTIFACTORY_REPO: String - The artifactory repo to clean up
  *   ARTIFACTORY_NUM_ARTIFACTS: String - How many artifacts to keep in artifactory
  *   ARTIFACTORY_DAYS_TO_KEEP_ARTIFACTS: String - Artifacts older than this will be deleted
+ *   REGEX: String - Limit seach to regex
  */
 
 timestamps {
@@ -48,6 +49,7 @@ timestamps {
         def artifactoryCreds = server.getCredentialsId()
         def ARTIFACTORY_NUM_ARTIFACTS = params.ARTIFACTORY_NUM_ARTIFACTS ? params.ARTIFACTORY_NUM_ARTIFACTS : env.ARTIFACTORY_NUM_ARTIFACTS
         def ARTIFACTORY_DAYS_TO_KEEP_ARTIFACTS = params.ARTIFACTORY_DAYS_TO_KEEP_ARTIFACTS ? params.ARTIFACTORY_DAYS_TO_KEEP_ARTIFACTS : env.ARTIFACTORY_DAYS_TO_KEEP_ARTIFACTS
+        def regexSearch = params.REGEX
         ret = false
         try {
             retry(2) {
@@ -58,7 +60,7 @@ timestamps {
                 }
                 switch (params.JOB_TYPE) {
                     case 'TIME':
-                        cleanupTime(ARTIFACTORY_SERVER_URL, ARTIFACTORY_REPO, ARTIFACTORY_DAYS_TO_KEEP_ARTIFACTS, artifactoryCreds)
+                        cleanupTime(ARTIFACTORY_SERVER_URL, ARTIFACTORY_REPO, ARTIFACTORY_DAYS_TO_KEEP_ARTIFACTS, artifactoryCreds, regexSearch)
                     break
                     case 'COUNT':
                         if (params.JOB_TO_CHECK) {
@@ -134,7 +136,7 @@ def getFolderNumbers(folderURI) {
     return folderNumbers.sort()
 }
 
-def cleanupTime(artifactory_server, artifactory_repo , artifactory_days_to_keep_artifacts, artifactoryCreds) {
+def cleanupTime(artifactory_server, artifactory_repo , artifactory_days_to_keep_artifacts, artifactoryCreds, regexSearch) {
     stage('Discover Old Artifacts') {
         // This parameter is originally a string and needs to be casted as an Integer
         artifactory_days_to_keep_artifacts = artifactory_days_to_keep_artifacts as Integer
@@ -144,7 +146,8 @@ def cleanupTime(artifactory_server, artifactory_repo , artifactory_days_to_keep_
         echo "Getting all artifacts over ${artifactory_days_to_keep_artifacts} days old"
         currentBuild.description = "Deleting build over ${artifactory_days_to_keep_artifacts} days"
 
-        def request = httpRequest authentication: artifactoryCreds, consoleLogResponseBody: true, validResponseCodes: '200,404', url: "${artifactory_server}/api/search/usage?notUsedSince=${current_time}&createdBefore=${created_before_time}&repos=${artifactory_repo}"
+        //def request = httpRequest authentication: artifactoryCreds, consoleLogResponseBody: true, validResponseCodes: '200,404', url: "${artifactory_server}/api/search/usage?notUsedSince=${current_time}&createdBefore=${created_before_time}&repos=${artifactory_repo}"
+        def request = httpRequest authentication: artifactoryCreds, consoleLogResponseBody: true, validResponseCodes: '200,404', url: "${artifactory_server}/api/search/pattern?pattern=${artifactory_repo}:hyc-runtimes-jenkins.swg-devops.com/${regexSearch}/*"
         data = readJSON text: request.getContent()
         requestStatus = request.getStatus()
     }
@@ -159,7 +162,8 @@ def cleanupTime(artifactory_server, artifactory_repo , artifactory_days_to_keep_
             }
             artifactFoldersUnique = artifactFolders.unique()
             artifactFoldersUnique.each() { uri ->
-                httpRequest authentication: artifactoryCreds, httpMode: 'DELETE', consoleLogResponseBody: true, url: uri
+                //httpRequest authentication: artifactoryCreds, httpMode: 'DELETE', consoleLogResponseBody: true, url: uri
+                echo "Delete:$uri"
             }
             echo 'Deleted all the old artifacts'
             currentBuild.description += "<br>Deleted ${artifacts_to_be_deleted.size()} artifacts"
