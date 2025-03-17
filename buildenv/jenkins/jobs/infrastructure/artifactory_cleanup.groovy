@@ -165,8 +165,8 @@ def cleanupTime(artifactory_server, artifactory_repo , artifactory_days_to_keep_
             artifactFoldersUnique.each() { uri ->
                 if (uri.contains(regexSearch)) {
                     echo "Artifact matches regex, delete $uri"
-                    //httpRequest authentication: artifactoryCreds, httpMode: 'DELETE', consoleLogResponseBody: true, url: uri
-                    echo "Delete:$uri"
+                    httpRequest authentication: artifactoryCreds, httpMode: 'DELETE', consoleLogResponseBody: true, url: uri
+                    //echo "Delete:$uri"
                 } else {
                     echo "Artifact does not match regex, skipping $uri"
                 }
