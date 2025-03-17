@@ -149,6 +149,7 @@ def cleanupTime(artifactory_server, artifactory_repo , artifactory_days_to_keep_
         //def request = httpRequest authentication: artifactoryCreds, consoleLogResponseBody: true, validResponseCodes: '200,404', url: "${artifactory_server}/api/search/usage?notUsedSince=${current_time}&createdBefore=${created_before_time}&repos=${artifactory_repo}"
         def request = httpRequest authentication: artifactoryCreds, consoleLogResponseBody: true, validResponseCodes: '200,404', url: "${artifactory_server}/api/search/pattern?pattern=${artifactory_repo}:hyc-runtimes-jenkins.swg-devops.com/${regexSearch}/*"
         data = readJSON text: request.getContent()
+        println data
         requestStatus = request.getStatus()
     }
     stage ('Delete Old Artifacts') {
